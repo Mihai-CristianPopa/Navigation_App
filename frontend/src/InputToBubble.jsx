@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import { geocodeAttraction } from "./helpers/geocoding.js";
 
 function InputToBubble() {
   const [bubbles, setBubbles] = useState([]);
@@ -7,6 +8,8 @@ function InputToBubble() {
 
   const addBubble = () => {
     if (!inputValue.trim()) return;
+
+    geocodeAttraction(inputValue, result => console.log(result));
 
     const bubbleSize = Math.floor(Math.random() * 60) + 40;
 

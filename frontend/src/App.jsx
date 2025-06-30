@@ -5,10 +5,11 @@ import './App.css'
 // import DynamicInputList from './DynamicInputList.jsx'
 // import RandomBubbleInputs from './RandomBubbleInputs.jsx'
 import InputToBubble from './InputToBubble.jsx'
+import Map from './Map.jsx'
 
 function App() {
   // const [count, setCount] = useState(0)
-  return <InputToBubble />
+  return <Map positionInfos={[{address: "Liberty Statue"}, {address: "Empire State Building"}]}/>
 
   // return (
   //   <>
