@@ -9,7 +9,7 @@ import Map from './Map.jsx'
 
 function App() {
   // const [count, setCount] = useState(0)
-  return <Map positionInfos={[{address: "Liberty Statue"}, {address: "Empire State Building"}]}/>
+  // return <Map positionInfos={[{address: "Liberty Statue"}, {address: "Empire State Building"}]}/>
 
   // return (
   //   <>
@@ -36,7 +36,7 @@ function App() {
   //     {/* <input name="myInput" /> */}
   //     {/* <DynamicInputList /> */}
   //     {/* <RandomBubbleInputs /> */}
-  //     <InputToBubble />
+      return <InputToBubble />
   //   </>
   // )
 }

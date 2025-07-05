@@ -1,15 +1,25 @@
 import React, { useState } from "react";
-import { geocodeAttraction } from "./helpers/geocoding.js";
+// import { geocodeAttraction } from "./helpers/geocoding.js";
 
 function InputToBubble() {
   const [bubbles, setBubbles] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [editingId, setEditingId] = useState(null);
 
+  const geocodeAttraction = async () => {
+    const firstAttractionName = bubbles[0].text;
+    const origin = "http://localhost:3000"
+    const endpoint = "/api/geocode"
+    const apiUri = `${origin}${endpoint}?place=${encodeURIComponent(firstAttractionName)}`;
+    const response = await fetch(apiUri);
+    const results = await response.json();
+    console.log(results)
+  }
+
   const addBubble = () => {
     if (!inputValue.trim()) return;
 
-    geocodeAttraction(inputValue, result => console.log(result));
+    // geocodeAttraction(inputValue, result => console.log(result));
 
     const bubbleSize = Math.floor(Math.random() * 60) + 40;
 
@@ -65,6 +75,7 @@ function InputToBubble() {
           style={{ padding: '8px', marginRight: '8px' }}
         />
         <button onClick={addBubble}>Add Bubble</button>
+        <button onClick={geocodeAttraction}>Get coordinates</button>
       </div>
 
       {/* Full-Screen Container */}
