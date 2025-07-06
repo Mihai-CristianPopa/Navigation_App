@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 // import { geocodeAttraction } from "./helpers/geocoding.js";
+const BACKEND_ORIGIN = import.meta.env.VITE_BACKEND_ORIGIN;
+const GEOCODE_ENDPOINT = import.meta.env.VITE_GEOCODE_ENDPOINT;
 
 function InputToBubble() {
   const [bubbles, setBubbles] = useState([]);
@@ -8,9 +10,9 @@ function InputToBubble() {
 
   const geocodeAttraction = async () => {
     const firstAttractionName = bubbles[0].text;
-    const origin = "http://localhost:3000"
-    const endpoint = "/api/geocode"
-    const apiUri = `${origin}${endpoint}?place=${encodeURIComponent(firstAttractionName)}`;
+    // const origin = "http://localhost:3000"
+    // const endpoint = "/api/geocode"
+    const apiUri = `${BACKEND_ORIGIN}${GEOCODE_ENDPOINT}?place=${encodeURIComponent(firstAttractionName)}`;
     const response = await fetch(apiUri);
     const results = await response.json();
     console.log(results)
