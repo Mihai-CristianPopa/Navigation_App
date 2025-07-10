@@ -2,7 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import axios from "axios";
 import cors from "cors";
-import logger from './logger.js';
+import logger from "./logger.js";
+import { insertAttraction } from "./services/attractionService.js"
 
 dotenv.config(); // Load .env -> process.env
 
@@ -49,7 +50,9 @@ app.get("/api/geocode", async (req, res) => {
         }
       }
     );
-    res.json(response.data);
+    const insertedAttraction = await insertAttraction(response.data[0]);
+    logger.info(`Attraction with id ${insertedAttraction.insertedId.toString()} has been added to the attractions collection`)
+    res.status(200).json(response.data);
   } catch (err) {
     logger.error("Failed to geocode", {
       statusCode: err.status,
