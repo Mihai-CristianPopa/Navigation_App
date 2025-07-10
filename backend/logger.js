@@ -31,8 +31,8 @@ const logger = winston.createLogger({
         winston.format.simple()
       )
     }),
-    new winston.transports.File({ filename: './logs/combined.log' }),
-    new winston.transports.File({ filename: './logs/errors.log', level: 'error' })
+    new winston.transports.File({ filename: './backend/logs/combined.log' }),
+    new winston.transports.File({ filename: './backend/logs/errors.log', level: 'error' })
   ]
 });
 logger.add(new DailyRotateFile({
