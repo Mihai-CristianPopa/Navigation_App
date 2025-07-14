@@ -1,6 +1,7 @@
 import axios from "axios";
 import logger from "../logger.js";
 import { getAttractionOptions, insertAttraction } from "../services/attractionService.js";
+import { getDailyApiRequestCount, trackApiRequest } from "../services/apiTrackingService.js";
 import logObj from "../loggerHelper.js";
 import { config } from "../configs/config.js";
 
@@ -38,6 +39,12 @@ export const geocodeController = async (req, res) => {
       res.set("X-Cache", "HIT");
       return res.status(200).json(cachedAttraction);
     } else {
+      const todayLocationIqRequests = await getDailyApiRequestCount("LocationIQ");
+      if (todayLocationIqRequests > 5000) {
+        logger.error("Daily API limit reached", logObj(null, req, startTime));
+        return res.status(429).json({ error: "Daily API limit reached" })
+      }
+
       const response = await axios.get(
         `https://us1.locationiq.com/v1/search.php`,
         {
@@ -48,7 +55,11 @@ export const geocodeController = async (req, res) => {
           }
         }
       );
-      
+
+      if (!req.app.locals.dbIsDown) {
+        await trackApiRequest("LocationIQ", "geocode", req.query, true);
+      }
+
       const attractionOptionsToBeAdded = { attraction_search_name: place, options: response.data };
       
       if (writeToCache === true) {
@@ -62,6 +73,9 @@ export const geocodeController = async (req, res) => {
       return res.status(200).json(response.data);
     }
   } catch (err) {
+    if (!req.app.locals.dbIsDown) {
+        await trackApiRequest("LocationIQ", "geocode", req.query, false);
+    }
     logger.error("Failed to geocode", logObj(null, req, startTime, err));
     res.status(500).json({ error: "Failed to geocode" });
   }
