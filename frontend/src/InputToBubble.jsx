@@ -3,6 +3,15 @@ import React, { useState } from "react";
 const BACKEND_ORIGIN = import.meta.env.VITE_BACKEND_ORIGIN;
 const GEOCODE_ENDPOINT = import.meta.env.VITE_GEOCODE_ENDPOINT;
 
+const buildApiUri = (place, readFromCache = true, writeToCache = true) => {
+  const params = new URLSearchParams({
+    place: place,
+    readFromCache: readFromCache.toString(),
+    writeToCache: writeToCache.toString()
+  });
+  return `${BACKEND_ORIGIN}${GEOCODE_ENDPOINT}?${params}`;
+};
+
 function InputToBubble() {
   const [bubbles, setBubbles] = useState([]);
   const [inputValue, setInputValue] = useState('');
@@ -12,7 +21,8 @@ function InputToBubble() {
     const firstAttractionName = bubbles[0].text;
     // const origin = "http://localhost:3000"
     // const endpoint = "/api/geocode"
-    const apiUri = `${BACKEND_ORIGIN}${GEOCODE_ENDPOINT}?place=${encodeURIComponent(firstAttractionName)}`;
+    "http://localhost:3000/api/geocode?place=New%20York&readFromCache=false&writeToCache=true"
+    const apiUri = buildApiUri(firstAttractionName);
     const response = await fetch(apiUri);
     const results = await response.json();
     console.log(results)
