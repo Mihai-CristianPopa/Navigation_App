@@ -1,12 +1,10 @@
 import { MongoClient, ServerApiVersion } from 'mongodb';
-import dotenv from "dotenv";
+import { config } from "../configs/config.js";
 
-dotenv.config();
+const mongoUser = config.mongoUser;
+const mongoPassword = config.mongoPassword;
 
-const MONGO_USER = process.env.MONGO_USER
-const MONGO_PASSWORD = process.env.MONGO_PASSWORD
-
-const uri = `mongodb+srv://${MONGO_USER}:${MONGO_PASSWORD}@map-navigation.lim17rk.mongodb.net/?retryWrites=true&w=majority&appName=Map-Navigation`;
+const uri = `mongodb+srv://${mongoUser}:${mongoPassword}@map-navigation.lim17rk.mongodb.net/?retryWrites=true&w=majority&appName=Map-Navigation`;
 
 const client = new MongoClient(uri, {
   serverApi: {
