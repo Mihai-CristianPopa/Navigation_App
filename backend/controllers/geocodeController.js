@@ -40,8 +40,9 @@ export const geocodeController = async (req, res) => {
       return res.status(200).json(cachedAttraction);
     } else {
       const todayLocationIqRequests = await getDailyApiRequestCount("LocationIQ");
+      logger.info(`Today there have been ${todayLocationIqRequests} LocationIQ request(s) made`);
       if (todayLocationIqRequests > 5000) {
-        logger.error("Daily API limit reached", logObj(null, req, startTime));
+        logger.error("Daily API limit reached", logObj(429, req, startTime));
         return res.status(429).json({ error: "Daily API limit reached" })
       }
 
@@ -60,7 +61,12 @@ export const geocodeController = async (req, res) => {
         await trackApiRequest("LocationIQ", "geocode", req.query, true);
       }
 
-      const attractionOptionsToBeAdded = { attraction_search_name: place, options: response.data };
+      const attractionOptionsToBeAdded = {
+        attraction_search_name: place,
+        options: response.data,
+        created_at: new Date(),
+        date: new Date().toISOString().split('T')[0]
+      };
       
       if (writeToCache === true) {
         const insertedAttraction = await insertAttraction(attractionOptionsToBeAdded);
