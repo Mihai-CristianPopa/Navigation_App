@@ -4,6 +4,7 @@ import logger from "./logger.js";
 import dbClient from "./db/mongoClient.js";
 import geocodeRoutes from "./routes/geocodeRoutes.js";
 import { config } from "./configs/config.js";
+// import { createClearingIndex } from "./services/apiTrackingService.js";
 
 
 const app = express();
@@ -31,6 +32,14 @@ async function startServer() {
     logger.error("Connection to MongoDB failed, only uncached requests will work");
     app.locals.dbIsDown = true;
   }
+
+  // This needed to be ran only once so removing it for now
+  // try {
+  //   await createClearingIndex();
+  //   logger.info("Clearing index for API requests table has been created");
+  // } catch (error) {
+  //   logger.error("Error when creating the clearing index for the API requests table", error);
+  // }
   
   app.listen(port, () => {
     logger.info(`Geocoding server running on http://localhost:${port}`);

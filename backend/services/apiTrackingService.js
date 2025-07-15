@@ -24,7 +24,7 @@ export async function trackApiRequest(apiProvider, endpoint, query, isSuccessful
 export async function getDailyApiRequestCount(apiProvider, date = null) {
     try {
         const db = dbClient.db("geocoding_results");
-        const collection = db.collection('api_requests');
+        const collection = db.collection("api_requests");
 
         const targetDate = date || new Date().toISOString().split('T')[0];
 
@@ -38,4 +38,13 @@ export async function getDailyApiRequestCount(apiProvider, date = null) {
         logger.error("Failed to get daily API request count", { error: error.message });
         return 0;
     }
+}
+
+// Only needed to be ran once
+export async function createClearingIndex() {
+    const db = dbClient.db("geocoding_results");
+    const collection = db.collection("api_requests");
+    return collection.createIndex("timestamp", {
+        expireAfterSeconds: 2 * 24 * 60 * 60
+    });
 }
