@@ -58,7 +58,7 @@ export const geocodeController = async (req, res) => {
       );
 
       if (!req.app.locals.dbIsDown) {
-        await trackApiRequest("LocationIQ", "geocode", req.query, true);
+        trackApiRequest("LocationIQ", "geocode", req.query, true);
       }
 
       const attractionOptionsToBeAdded = {
@@ -80,7 +80,7 @@ export const geocodeController = async (req, res) => {
     }
   } catch (err) {
     if (!req.app.locals.dbIsDown) {
-        await trackApiRequest("LocationIQ", "geocode", req.query, false);
+        trackApiRequest("LocationIQ", "geocode", req.query, false);
     }
     logger.error("Failed to geocode", logObj(null, req, startTime, err));
     res.status(500).json({ error: "Failed to geocode" });
