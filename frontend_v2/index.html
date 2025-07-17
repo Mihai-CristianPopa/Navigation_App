@@ -8,10 +8,11 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     crossorigin=""/>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <!-- <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" /> -->
     <style>
         #map { height: 90vh; width: 100%; }
     </style>
+    <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
 
@@ -32,8 +33,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""></script>
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <!-- <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script> -->
     <script>
         // Initialize Map
         // geo:44.435423,26.102287?z=19
@@ -44,10 +45,13 @@
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
+        let allMarkers = []
+
         // Add a marker
         let userMarker = L.marker([44.435423, 26.102287]).addTo(map)
             .bindPopup('Your Location')
             .openPopup();
+        allMarkers.push(userMarker);
 
         // Get user's current location
         map.locate({ setView: true, maxZoom: 16 });
@@ -57,30 +61,30 @@
             userMarker.setLatLng(e.latlng).bindPopup("You are within " + radius + " meters").openPopup();
         });
 
-        // Add a search box using Leaflet Control Geocoder
-        L.Control.geocoder().addTo(map);
+        // // Add a search box using Leaflet Control Geocoder
+        // L.Control.geocoder().addTo(map);
 
         // Store waypoints (start and destination)
-        let waypoints = [];
+        // let waypoints = [];
 
-        // Function to add waypoints when user clicks the map
-        map.on('click', function(e) {
-            if (waypoints.length < 2) {
-                waypoints.push(L.latLng(e.latlng.lat, e.latlng.lng));
+        // // Function to add waypoints when user clicks the map
+        // map.on('click', function(e) {
+        //     if (waypoints.length < 2) {
+        //         waypoints.push(L.latLng(e.latlng.lat, e.latlng.lng));
 
-                // Place a marker
-                L.marker([e.latlng.lat, e.latlng.lng]).addTo(map)
-                    .bindPopup(waypoints.length === 1 ? "Start Point" : "Destination").openPopup();
+        //         // Place a marker
+        //         L.marker([e.latlng.lat, e.latlng.lng]).addTo(map)
+        //             .bindPopup(waypoints.length === 1 ? "Start Point" : "Destination").openPopup();
 
-                // If two waypoints exist, calculate the route
-                if (waypoints.length === 2) {
-                    L.Routing.control({
-                        waypoints: waypoints,
-                        routeWhileDragging: true
-                    }).addTo(map);
-                }
-            }
-        });
+        //         // If two waypoints exist, calculate the route
+        //         if (waypoints.length === 2) {
+        //             L.Routing.control({
+        //                 waypoints: waypoints,
+        //                 routeWhileDragging: true
+        //             }).addTo(map);
+        //         }
+        //     }
+        // });
         const input          = document.getElementById('search-input');
         const searchButton   = document.getElementById('search-button');
         const suggestionList = document.getElementById('suggestions');
@@ -112,24 +116,30 @@
             suggestionList.innerHTML = '';
             suggestionList.hidden    = true;
         }
-
+        let lastSearchResponse;
         // Main search function
         async function performSearch() {
             const q = input.value.trim();
             if (!q) return clearSuggestions();
 
             try {
-                const items = await fetchSuggestions(q);
+                lastSearchResponse = await fetchSuggestions(q);
+                const items = lastSearchResponse.options;
                 suggestionList.innerHTML = '';
                 if (!items.length) return clearSuggestions();
 
-                items.forEach(({ display_name, lat, lon }) => {
+                items.forEach(({ display_name, lat, lon, place_id }) => {
                     const li = document.createElement('li');
                     li.textContent = display_name;
                     li.dataset.lat = lat;
                     li.dataset.lon = lon;
+                    li.dataset.id = Number.parseInt(place_id);
                     suggestionList.append(li);
                 });
+                const li = document.createElement('li');
+                li.textContent = "None of the above...";
+                li.dataset.id = -1;
+                suggestionList.append(li);
                 suggestionList.hidden = false;
             } catch (err) {
                 console.error(err);
@@ -152,19 +162,39 @@
         const li = e.target.closest('li');
         if (!li) return;
 
-        const lat  = parseFloat(li.dataset.lat);
-        const lon  = parseFloat(li.dataset.lon);
-        const name = li.textContent;
+        if (li.id === -1) {
+            // Make another backend request and try again in a different form,
+            // Maybe request a nearby city
+        } else {
+            const lat  = parseFloat(li.dataset.lat);
+            const lon  = parseFloat(li.dataset.lon);
+            const name = li.textContent;
 
-        input.value = name;
-        clearSuggestions();
+            input.value = "";
+            clearSuggestions();
 
-        map.setView([lat, lon], 15);
-        L.marker([lat, lon])
-            .addTo(map)
-            .bindPopup(`<strong>${name}</strong>`)
-            .openPopup();
+            // map.setView([lat, lon], 15);
+            const newMarker = L.marker([lat, lon])
+                .addTo(map)
+                .bindPopup(`<strong>${name}</strong>`)
+                .openPopup();
+            allMarkers.push(newMarker)
+            fitAllMarkers();
+        }
         });
+
+        // Function to fit all markers in view
+        function fitAllMarkers() {
+            if (allMarkers.length === 0) return;
+            
+            // Create a bounds object
+            const group = new L.featureGroup(allMarkers);
+            
+            // Fit the map to show all markers
+            map.fitBounds(group.getBounds(), {
+                padding: [20, 20] // Add 20px padding around the bounds
+            });
+        }
 
     </script>
 </body>

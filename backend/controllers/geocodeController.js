@@ -76,7 +76,7 @@ export const geocodeController = async (req, res) => {
       }
       
       res.set("X-Cache", "MISS");
-      return res.status(200).json(response.data);
+      return res.status(200).json(attractionOptionsToBeAdded);
     }
   } catch (err) {
     if (!req.app.locals.dbIsDown) {
