@@ -1,0 +1,165 @@
+import resolveBackendOrigin from "./checkBackend.js";
+
+const backendOrigin = await resolveBackendOrigin();
+if (!backendOrigin) {
+    // Add a message for the users that the map searching will not work
+}
+// Initialize Map
+// geo:44.435423,26.102287?z=19
+var map = L.map('map').setView([44.435423, 26.102287], 19); // Default view (Bucharest)
+
+// Add OpenStreetMap Tiles
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+let allMarkers = []
+
+// Add a marker
+let userMarker = L.marker([44.435423, 26.102287]).addTo(map)
+    .bindPopup('Your Location')
+    .openPopup();
+allMarkers.push(userMarker);
+
+// Get user's current location
+map.locate({ setView: true, maxZoom: 16 });
+
+map.on('locationfound', function(e) {
+    var radius = e.accuracy / 2;
+    userMarker.setLatLng(e.latlng).bindPopup("You are within " + radius + " meters").openPopup();
+});
+
+// // Add a search box using Leaflet Control Geocoder
+// L.Control.geocoder().addTo(map);
+
+// Store waypoints (start and destination)
+// let waypoints = [];
+
+// // Function to add waypoints when user clicks the map
+// map.on('click', function(e) {
+//     if (waypoints.length < 2) {
+//         waypoints.push(L.latLng(e.latlng.lat, e.latlng.lng));
+
+//         // Place a marker
+//         L.marker([e.latlng.lat, e.latlng.lng]).addTo(map)
+//             .bindPopup(waypoints.length === 1 ? "Start Point" : "Destination").openPopup();
+
+//         // If two waypoints exist, calculate the route
+//         if (waypoints.length === 2) {
+//             L.Routing.control({
+//                 waypoints: waypoints,
+//                 routeWhileDragging: true
+//             }).addTo(map);
+//         }
+//     }
+// });
+const input          = document.getElementById('search-input');
+const searchButton   = document.getElementById('search-button');
+const suggestionList = document.getElementById('suggestions');
+function debounce(fn, wait = 300) {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => fn(...args), wait);
+    };
+}
+
+async function fetchSuggestions(q) {
+    const res = await fetch(buildApiUri(q));
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    // Expect JSON: [{ display_name, lat, lon }, …]
+        return res.json();
+}
+
+const buildApiUri = (place, readFromCache = true, writeToCache = true) => {
+    const params = new URLSearchParams({
+        place: place,
+        readFromCache: readFromCache.toString(),
+        writeToCache: writeToCache.toString()
+    });
+return `${backendOrigin}/api/geocode?${params}`;
+};
+
+function clearSuggestions() {
+    suggestionList.innerHTML = '';
+    suggestionList.hidden    = true;
+}
+let lastSearchResponse;
+// Main search function
+async function performSearch() {
+    const q = input.value.trim();
+    if (!q) return clearSuggestions();
+
+    try {
+        lastSearchResponse = await fetchSuggestions(q);
+        const items = lastSearchResponse.options;
+        suggestionList.innerHTML = '';
+        if (!items.length) return clearSuggestions();
+
+        items.forEach(({ display_name, lat, lon, place_id }) => {
+            const li = document.createElement('li');
+            li.textContent = display_name;
+            li.dataset.lat = lat;
+            li.dataset.lon = lon;
+            li.dataset.id = Number.parseInt(place_id);
+            suggestionList.append(li);
+        });
+        const li = document.createElement('li');
+        li.textContent = "None of the above...";
+        li.dataset.id = -1;
+        suggestionList.append(li);
+        suggestionList.hidden = false;
+    } catch (err) {
+        console.error(err);
+        clearSuggestions();
+    }
+}
+
+// Button click event
+searchButton.addEventListener('click', performSearch);
+
+// Enter key event
+input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault(); // Prevent form submission if inside a form
+        performSearch();
+    }
+});
+
+suggestionList.addEventListener('click', (e) => {
+const li = e.target.closest('li');
+if (!li) return;
+
+if (li.id === -1) {
+    // Make another backend request and try again in a different form,
+    // Maybe request a nearby city
+} else {
+    const lat  = parseFloat(li.dataset.lat);
+    const lon  = parseFloat(li.dataset.lon);
+    const name = li.textContent;
+
+    input.value = "";
+    clearSuggestions();
+
+    // map.setView([lat, lon], 15);
+    const newMarker = L.marker([lat, lon])
+        .addTo(map)
+        .bindPopup(`<strong>${name}</strong>`)
+        .openPopup();
+    allMarkers.push(newMarker)
+    fitAllMarkers();
+}
+});
+
+// Function to fit all markers in view
+function fitAllMarkers() {
+    if (allMarkers.length === 0) return;
+    
+    // Create a bounds object
+    const group = new L.featureGroup(allMarkers);
+    
+    // Fit the map to show all markers
+    map.fitBounds(group.getBounds(), {
+        padding: [20, 20] // Add 20px padding around the bounds
+    });
+}
