@@ -1,11 +1,20 @@
 import resolveBackendOrigin from "./checkBackend.js";
 
 const backendOrigin = await resolveBackendOrigin();
-if (!backendOrigin) {
+const appExplanationParagraph = document.getElementById("appExplanation");
+if (backendOrigin) {
+    // By default the search container is hidden. Whenever there is a backend available
+    // Show the search container
+    const searchContainer = document.getElementById("search-container");
+    searchContainer.hidden = false;
+} else {
     // Add a message for the users that the map searching will not work
+    appExplanationParagraph.textContent = "Currently the application functionality can not be used. Please try again later.";
+    appExplanationParagraph.style.color = "red";
+    appExplanationParagraph.style.fontWeight = "bold";
 }
-// Initialize Map
-// geo:44.435423,26.102287?z=19
+appExplanationParagraph.hidden = false;
+// Initialize Map at University of Bucharest
 var map = L.map('map').setView([44.435423, 26.102287], 19); // Default view (Bucharest)
 
 // Add OpenStreetMap Tiles
@@ -14,20 +23,24 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 let allMarkers = []
+let coordinatesList = "";
 
-// Add a marker
-let userMarker = L.marker([44.435423, 26.102287]).addTo(map)
-    .bindPopup('Your Location')
-    .openPopup();
-allMarkers.push(userMarker);
+function buildCoordinatesString(lat, lon) {
+    return `${lon},${lat}`;
+}
 
-// Get user's current location
-map.locate({ setView: true, maxZoom: 16 });
+// Add a marker - Removing the Unviersity Marker for now
+// let userMarker = L.marker([44.435423, 26.102287]).addTo(map)
+//     .bindPopup('Your Location')
+//     .openPopup();
+// allMarkers.push(userMarker);
 
-map.on('locationfound', function(e) {
-    var radius = e.accuracy / 2;
-    userMarker.setLatLng(e.latlng).bindPopup("You are within " + radius + " meters").openPopup();
-});
+// Get user's current location - Removing location finding for now
+// map.locate({ setView: true, maxZoom: 16 });
+// map.on('locationfound', function(e) {
+//     var radius = e.accuracy / 2;
+//     userMarker.setLatLng(e.latlng).bindPopup("You are within " + radius + " meters").openPopup();
+// });
 
 // // Add a search box using Leaflet Control Geocoder
 // L.Control.geocoder().addTo(map);
@@ -56,28 +69,43 @@ map.on('locationfound', function(e) {
 const input          = document.getElementById('search-input');
 const searchButton   = document.getElementById('search-button');
 const suggestionList = document.getElementById('suggestions');
-function debounce(fn, wait = 300) {
-    let timeout;
-    return (...args) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => fn(...args), wait);
-    };
-}
+const routingButton = document.getElementById("routing-button");
+// function debounce(fn, wait = 300) {
+//     let timeout;
+//     return (...args) => {
+//         clearTimeout(timeout);
+//         timeout = setTimeout(() => fn(...args), wait);
+//     };
+// }
 
 async function fetchSuggestions(q) {
-    const res = await fetch(buildApiUri(q));
+    const res = await fetch(buildGeocodeApiUri(q));
     if (!res.ok) throw new Error(`Server error: ${res.status}`);
     // Expect JSON: [{ display_name, lat, lon }, …]
-        return res.json();
+    return res.json();
 }
 
-const buildApiUri = (place, readFromCache = true, writeToCache = true) => {
+const buildGeocodeApiUri = (place, readFromCache = true, writeToCache = true) => {
     const params = new URLSearchParams({
         place: place,
         readFromCache: readFromCache.toString(),
         writeToCache: writeToCache.toString()
     });
 return `${backendOrigin}/api/geocode?${params}`;
+};
+
+async function fetchTSPRouting(coordinates) {
+    const res = await fetch(buildOptimizeApiUri(coordinates));
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    // Expect JSON: [{ display_name, lat, lon }, …]
+    return res.json();
+}
+
+const buildOptimizeApiUri = (coordinatesList) => {
+    const params = new URLSearchParams({
+        coordinatesList: coordinatesList
+    });
+return `${backendOrigin}/api/optimize?${params}`;
 };
 
 function clearSuggestions() {
@@ -115,6 +143,11 @@ async function performSearch() {
     }
 }
 
+routingButton.addEventListener("click", async () => {
+    const geojsonFeature = await fetchTSPRouting(coordinatesList.slice(1));
+    L.geoJSON(geojsonFeature, { style: { color: 'blue', weight: 5 } }).addTo(map);
+})
+
 // Button click event
 searchButton.addEventListener('click', performSearch);
 
@@ -137,6 +170,8 @@ if (li.id === -1) {
     const lat  = parseFloat(li.dataset.lat);
     const lon  = parseFloat(li.dataset.lon);
     const name = li.textContent;
+
+    coordinatesList = coordinatesList.concat(";", buildCoordinatesString(lat, lon));
 
     input.value = "";
     clearSuggestions();

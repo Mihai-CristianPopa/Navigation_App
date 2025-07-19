@@ -1,11 +1,9 @@
-/* Full-screen map */
 #map {
   height: 90vh;
   width: 100%;
 }
 
-/* Search box container */
-#search-container {
+/* #search-container {
   position: absolute;
   top: 10px;
   left: 10px;
@@ -17,7 +15,6 @@
   box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
 
-/* Input field */
 #search-input {
   width: 100%;
   padding: 0.5rem;
@@ -26,7 +23,6 @@
   border-radius: 2px;
 }
 
-/* Suggestions dropdown */
 #suggestions {
   list-style: none;
   margin: 0.5rem 0 0;
@@ -44,4 +40,4 @@
 
 #suggestions li:hover {
   background: #f0f0f0;
-}
+} */
