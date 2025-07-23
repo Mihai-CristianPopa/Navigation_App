@@ -4,212 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Map Navigation App</title>
+    <!-- Probably the next stylesheet can be removed -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
         crossorigin=""/>
+    <!-- This is used for the search icon as per https://www.w3schools.com/howto/howto_css_search_button.asp -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Own files -->
     <link rel="stylesheet" href="./css/style.css" />
     <script type="module" src="./js/checkBackend.js"></script>
+    <script type="module" src="./js/attractionManager.js"></script>
     <script type="module" src="./js/main.js"></script>
 </head>
 <body>
-    <div id="header">
-        <h1 id="pageTitle">Map Navigation</h1>
-        <p id="appExplanation"
-            hidden="true">
-            This application is used for routing you to the attractions you want to see.
-        </p>
-    </div>
-    
-    <div id="search-container"
-        >
-        <input id="search-input"
-            type="text"
-            placeholder="Search for an attraction…"
-            autocomplete="off"
-        />
-        <button id="search-button">Search</button>
-        <ul id="suggestions" hidden></ul>
-    </div>
-    <div>
-        <button id="routing-button">Get routing</button>
-    </div>
-    <div id="map"></div>
-    <div id="footer">
-        <a href="https://www.flaticon.com/free-icons/magnifying-glass"
-            title="magnifying glass icons">
-            Magnifying glass icons created by Muhammad_Usman - Flaticon
-        </a>
-    </div>
+    <div id="app-container">
+        <!-- Flexbox Row 1 -->
+        <header class="center-text">
+            <h1 id="page-title">Map Navigation</h1>
+        </header>
 
+        <!-- Flexbox Row 2 -->
+        <p class="center-text"
+            id="app-explanation"
+            hidden>
+        </p>
+        
+        <!-- Flexbox Row 3 which should be another flexbox with Two Columns -->
+        <div id="input-output-row" hidden>
+            <!-- Column 1 Search Bar -->
+            <div id="search-container">
+                <form id="search-attraction-form" class="search-attraction" autocomplete="off">
+                    <input id="search-input"
+                        type="text"
+                        placeholder="Search for an attraction…" 
+                        autocomplete="off"
+                        aria-expanded="false"
+                        aria-haspopup="listbox"
+                        role="combobox"
+                    >
+                    <button id="search-button" type="submit" aria-label="Search">
+                        <i class="fa fa-search"></i>
+                    </button>
+                </form>
+                <ul id="suggestions" hidden role="listbox" aria-label="Search suggestions"></ul>
+            </div>
+            <!-- Column 2 Output box -->
+            <div id="output-column">
+                <div id="attractions-list">
+                    <h3>Selected Attractions</h3>
+                    <ul id="attractions-items"></ul>
+                </div>
+                <button id="routing-button">Get routing</button>
+            </div>
+        </div>
+
+        <!-- Flexbox Row 4 -->
+        <div id="map"></div>
+    </div>
+    <!-- Probably the next script can be removed -->
     <!-- <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
         crossorigin="">
     </script>
-    
-    <!-- <script type="module">
-        // Initialize Map
-        // geo:44.435423,26.102287?z=19
-        var map = L.map('map').setView([44.435423, 26.102287], 19); // Default view (Bucharest)
-
-        // Add OpenStreetMap Tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-
-        let allMarkers = []
-
-        // Add a marker
-        let userMarker = L.marker([44.435423, 26.102287]).addTo(map)
-            .bindPopup('Your Location')
-            .openPopup();
-        allMarkers.push(userMarker);
-
-        // Get user's current location
-        map.locate({ setView: true, maxZoom: 16 });
-
-        map.on('locationfound', function(e) {
-            var radius = e.accuracy / 2;
-            userMarker.setLatLng(e.latlng).bindPopup("You are within " + radius + " meters").openPopup();
-        });
-
-        // // Add a search box using Leaflet Control Geocoder
-        // L.Control.geocoder().addTo(map);
-
-        // Store waypoints (start and destination)
-        // let waypoints = [];
-
-        // // Function to add waypoints when user clicks the map
-        // map.on('click', function(e) {
-        //     if (waypoints.length < 2) {
-        //         waypoints.push(L.latLng(e.latlng.lat, e.latlng.lng));
-
-        //         // Place a marker
-        //         L.marker([e.latlng.lat, e.latlng.lng]).addTo(map)
-        //             .bindPopup(waypoints.length === 1 ? "Start Point" : "Destination").openPopup();
-
-        //         // If two waypoints exist, calculate the route
-        //         if (waypoints.length === 2) {
-        //             L.Routing.control({
-        //                 waypoints: waypoints,
-        //                 routeWhileDragging: true
-        //             }).addTo(map);
-        //         }
-        //     }
-        // });
-        const input          = document.getElementById('search-input');
-        const searchButton   = document.getElementById('search-button');
-        const suggestionList = document.getElementById('suggestions');
-        function debounce(fn, wait = 300) {
-            let timeout;
-            return (...args) => {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => fn(...args), wait);
-            };
-        }
-
-        async function fetchSuggestions(q) {
-            const res = await fetch(buildApiUri(q));
-            if (!res.ok) throw new Error(`Server error: ${res.status}`);
-            // Expect JSON: [{ display_name, lat, lon }, …]
-                return res.json();
-        }
-
-        const buildApiUri = (place, readFromCache = true, writeToCache = true) => {
-            const params = new URLSearchParams({
-                place: place,
-                readFromCache: readFromCache.toString(),
-                writeToCache: writeToCache.toString()
-            });
-        return `http://localhost:3000/api/geocode?${params}`;
-        };
-
-        function clearSuggestions() {
-            suggestionList.innerHTML = '';
-            suggestionList.hidden    = true;
-        }
-        let lastSearchResponse;
-        // Main search function
-        async function performSearch() {
-            const q = input.value.trim();
-            if (!q) return clearSuggestions();
-
-            try {
-                lastSearchResponse = await fetchSuggestions(q);
-                const items = lastSearchResponse.options;
-                suggestionList.innerHTML = '';
-                if (!items.length) return clearSuggestions();
-
-                items.forEach(({ display_name, lat, lon, place_id }) => {
-                    const li = document.createElement('li');
-                    li.textContent = display_name;
-                    li.dataset.lat = lat;
-                    li.dataset.lon = lon;
-                    li.dataset.id = Number.parseInt(place_id);
-                    suggestionList.append(li);
-                });
-                const li = document.createElement('li');
-                li.textContent = "None of the above...";
-                li.dataset.id = -1;
-                suggestionList.append(li);
-                suggestionList.hidden = false;
-            } catch (err) {
-                console.error(err);
-                clearSuggestions();
-            }
-        }
-
-        // Button click event
-        searchButton.addEventListener('click', performSearch);
-
-        // Enter key event
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault(); // Prevent form submission if inside a form
-                performSearch();
-            }
-        });
-
-        suggestionList.addEventListener('click', (e) => {
-        const li = e.target.closest('li');
-        if (!li) return;
-
-        if (li.id === -1) {
-            // Make another backend request and try again in a different form,
-            // Maybe request a nearby city
-        } else {
-            const lat  = parseFloat(li.dataset.lat);
-            const lon  = parseFloat(li.dataset.lon);
-            const name = li.textContent;
-
-            input.value = "";
-            clearSuggestions();
-
-            // map.setView([lat, lon], 15);
-            const newMarker = L.marker([lat, lon])
-                .addTo(map)
-                .bindPopup(`<strong>${name}</strong>`)
-                .openPopup();
-            allMarkers.push(newMarker)
-            fitAllMarkers();
-        }
-        });
-
-        // Function to fit all markers in view
-        function fitAllMarkers() {
-            if (allMarkers.length === 0) return;
-            
-            // Create a bounds object
-            const group = new L.featureGroup(allMarkers);
-            
-            // Fit the map to show all markers
-            map.fitBounds(group.getBounds(), {
-                padding: [20, 20] // Add 20px padding around the bounds
-            });
-        }
-
-    </script> -->
 </body>
 </html>

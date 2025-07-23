@@ -1,5 +1,89 @@
+/* https://www.joshwcomeau.com/css/custom-css-reset/ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  /* https://kittygiraudel.com/2020/05/18/using-calc-to-figure-out-optimal-line-height/ */
+  line-height: calc(1em + 0.5rem);
+  font-size: 18px;
+}
+
+/* body {
+  line-height: 1.5;
+} */
+
+input, button, textarea, select {
+  font: inherit;
+}
+
+p, h1, h2, h3, h4, h5, h6 {
+  overflow-wrap: break-word;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+}
+
+/* https://kilianvalkhof.com/2022/css-html/your-css-reset-needs-text-size-adjust-probably/ */
+html{
+  -moz-text-size-adjust: none;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+html, body {
+  height: 100%;
+}
+
+#app-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#page-title {
+  margin: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.center-text {
+  text-align: center;
+}
+
+#app-explanation {
+  margin: 0.5rem;
+}
+
+#input-output-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  margin: 0.5rem 0;
+}
+
+#search-container {
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+}
+
+#output-column {
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+}
+
+#routing-button{
+  padding: 0.5rem;
+}
+
 #map {
-  height: 90vh;
+  flex: 1;
   width: 100%;
 }
 
@@ -41,3 +125,181 @@
 #suggestions li:hover {
   background: #f0f0f0;
 } */
+
+#search-attraction-form {
+  width: 500px;
+  max-width:500px;
+}
+
+form.search-attraction input[type=text] {
+  padding: 0.5rem;
+  border: 1px solid grey;
+  float: left;
+  width: 80%;
+  background: #f1f1f1;
+}
+
+form.search-attraction button {
+  float: left;
+  width: 20%;
+  padding: 0.5rem;
+  background: #2196F3;
+  color: white;
+  border: 1px solid grey;
+  border-left: none;
+  cursor: pointer;
+}
+
+form.search-attraction button:hover {
+  background: #0b7dda;
+}
+
+form.search-attraction::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+/* Add these styles to your existing style.css */
+
+#search-container {
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+  position: relative; /* Add this for dropdown positioning */
+}
+
+#suggestions {
+  position: absolute;
+  top: 100%; /* Position right below the form */
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ccc;
+  border-top: none; /* Connect visually to the search form */
+  border-radius: 0 0 4px 4px; /* Round bottom corners only */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  /* Match the form width */
+  width: 100%;
+  max-width: 500px;
+}
+
+#suggestions li {
+  padding: 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s ease;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+#suggestions li:last-child {
+  border-bottom: none;
+}
+
+#suggestions li:hover {
+  background-color: #f5f5f5;
+}
+
+#suggestions li:active,
+#suggestions li.selected {
+  background-color: #2196F3;
+  color: white;
+}
+
+/* Style for "no results" or error messages */
+#suggestions li.no-results {
+  color: #666;
+  font-style: italic;
+  cursor: default;
+}
+
+#suggestions li.no-results:hover {
+  background-color: transparent;
+}
+
+/* Enhance the search form to connect better with dropdown */
+form.search-attraction {
+  max-width: 500px;
+  border-radius: 4px 4px 0 0; /* Round top corners when dropdown is open */
+  transition: border-radius 0.2s ease;
+}
+
+/* When suggestions are visible, adjust form styling */
+#search-container:has(#suggestions:not([hidden])) form.search-attraction {
+  border-radius: 4px 4px 0 0;
+}
+
+#search-container:has(#suggestions:not([hidden])) form.search-attraction input[type=text] {
+  border-bottom-left-radius: 0;
+}
+
+#search-container:has(#suggestions:not([hidden])) form.search-attraction button {
+  border-bottom-right-radius: 0;
+}
+
+/* Loading state for search button */
+form.search-attraction button.loading {
+  background: #666;
+  cursor: not-allowed;
+}
+
+form.search-attraction button.loading:hover {
+  background: #666;
+}
+
+/* Attraction list */
+/* #attractions-list {
+    margin-bottom: 1rem;
+}
+
+#attractions-list h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: #333;
+}
+
+#attractions-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+#attractions-items li {
+    background: #f5f5f5;
+    margin-bottom: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+} 
+
+#attractions-items li:hover {
+    background: #e9e9e9;
+} */
+/* Attraction list */
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  #search-attraction-form {
+    max-width: 250px;
+  }
+  
+  #suggestions {
+    max-width: 250px;
+    font-size: 0.85rem;
+  }
+  
+  #suggestions li {
+    padding: 0.6rem;
+  }
+}

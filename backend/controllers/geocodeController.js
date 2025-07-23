@@ -39,11 +39,13 @@ export const geocodeController = async (req, res) => {
       res.set("X-Cache", "HIT");
       return res.status(200).json(cachedAttraction);
     } else {
-      const todayLocationIqRequests = await getDailyApiRequestCount("LocationIQ");
-      logger.info(`Today there have been ${todayLocationIqRequests} LocationIQ request(s) made`);
-      if (todayLocationIqRequests > 5000) {
-        logger.error("Daily API limit reached", logObj(429, req, startTime));
-        return res.status(429).json({ error: "Daily API limit reached" })
+      if (!req.app.locals.dbIsDown) {
+        const todayLocationIqRequests = await getDailyApiRequestCount("LocationIQ");
+        logger.info(`Today there have been ${todayLocationIqRequests} LocationIQ request(s) made`);
+        if (todayLocationIqRequests > 5000) {
+          logger.error("Daily API limit reached", logObj(429, req, startTime));
+          return res.status(429).json({ error: "Daily API limit reached" })
+        }
       }
 
       const response = await axios.get(

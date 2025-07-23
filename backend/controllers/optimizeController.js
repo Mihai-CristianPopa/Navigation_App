@@ -4,7 +4,8 @@ import logObj from "../loggerHelper.js";
 import axios from "axios";
 
 export const optimizeController = async (req, res) => {
-  const {coordinatesList: coordinatesList} = req.query;
+  const startTime = Date.now();
+  const {coordinatesList: coordinates} = req.query;
   const profile = "driving";
   // Arcul de Triumf
   // lat
@@ -21,7 +22,6 @@ export const optimizeController = async (req, res) => {
   // "45.2357777"
   // lon
   // "25.9399087"
-  const coordinates = coordinatesList || "26.078127050916656,44.46719015;26.15247577172729,44.4372494;25.9399087,45.2357777";
   const apiKey = config.mapboxApiKey;
   if (!apiKey) {
     logger.error("The API Key for MapBox is not configured in the backend", logObj(500, req, startTime));
@@ -31,7 +31,8 @@ export const optimizeController = async (req, res) => {
   // https://api.mapbox.com/optimized-trips/v1/{profile}/{coordinates}
   // profile can be mapbox/(driving/walking/cycling/driving-traffic)
   // coordinates are <longitude1>,<lat1>;<long2>,<lat2>;
-  const response = await axios.get(
+  try {
+    const response = await axios.get(
         `https://api.mapbox.com/optimized-trips/v1/mapbox/${profile}/${coordinates}`,
         {
           params: {
@@ -42,6 +43,16 @@ export const optimizeController = async (req, res) => {
           }
         }
       );
-  res.status(200).json(response.data.trips[0].geometry);
+    logger.info(`MapBox API successfully retrieved a response with internal status code ${response.data.code}`, logObj(response.status, req, startTime));
+    if (response.status === 200 && response.data.code === "Ok"){
+      return res.status(200).json(response.data.trips[0].geometry);
+    } else {
+      return res.status(response.status).json(response.data);
+    }
+  } catch (error) {
+    logger.error("Some error occurred during the MapBox Optimize API call", logObj(null, req, startTime, error));
+    res.status(500).json(error);
+  }
+  
 
 };
