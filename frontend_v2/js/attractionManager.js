@@ -11,7 +11,7 @@ export default class AttractionManager {
    *
    * @returns {Array} containing all elements from the list
    */
-  getAttractions() {
+  get attractions() {
     const listItems = this.container.querySelectorAll('li');
     return Array.from(listItems).map(li => ({
       id: li.dataset.id,
@@ -49,9 +49,23 @@ export default class AttractionManager {
    * @description Used to get the coordinates list for the MapBox API Optimize request
    * @returns {String} which contains the list of coordinates of the attractions in lon,lat; format
    */
-  getCoordinatesString() {
-    return this.getAttractions()
+  get coordinatesString() {
+    return this.attractions
       .map(attraction => `${attraction.lon},${attraction.lat}`)
       .join(";");
+  }
+
+  /**
+   * @description Used to get the number of selected suggestions.
+   */
+  get length() {
+    return this.container.querySelectorAll('li').length;
+  }
+
+  /**
+   * @description Used to check whether there are at least two attractions selected.
+   */
+  get enoughAttractionsToRoute() {
+    return this.length >= 2;
   }
 }

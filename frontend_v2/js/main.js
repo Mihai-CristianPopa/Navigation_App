@@ -136,7 +136,7 @@ async function performSearch() {
   try {
     lastSearchResponse = await fetchSuggestions(lastQuery);
     const items = lastSearchResponse.options;
-    if (!items.length) return manageAppExplanationParagraph.showNoSuggestionsFoundErrorMessage();
+    if (!items.length) return manageAppExplanationParagraph.showNoSuggestionsFoundErrorMessage(lastQuery);
 
     manageAppExplanationParagraph.showDefaultAppSuccessMessage();
 
@@ -157,12 +157,14 @@ async function performSearch() {
     hasSuggestions = true;
   } catch (err) {
     console.error(err);
-    manageAppExplanationParagraph.showRequestErrorMessage();
+    manageAppExplanationParagraph.showRequestErrorMessage(lastQuery);
   }
 }
 
 routingButton.addEventListener("click", async () => {
-  const geojsonFeature = await fetchTSPRouting(manageSelectedAttractions.getCoordinatesString());
+  if (!manageSelectedAttractions.enoughAttractionsToRoute) return manageAppExplanationParagraph.showNotEnoughAttractionsSelectedErrorMessage();
+  const geojsonFeature = await fetchTSPRouting(manageSelectedAttractions.coordinatesString);
+  manageAppExplanationParagraph.showDefaultAppSuccessMessage();
   L.geoJSON(geojsonFeature, { style: { color: "blue", weight: 5 } }).addTo(map);
 })
 
