@@ -27,7 +27,8 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap contributors"
 }).addTo(map);
 
-let allMarkers = []
+let allMarkers = [];
+let markerLabels = [];
 
 // Add a marker - Removing the Unviersity Marker for now
 // let userMarker = L.marker([44.435423, 26.102287]).addTo(map)
@@ -98,12 +99,33 @@ const buildGeocodeApiUri = (place, readFromCache = true, writeToCache = true) =>
   return `${backendOrigin}/api/geocode?${params}`;
 };
 
+/**
+ * @example Response {
+ * code: "Ok",
+ * waypoints: [
+ * {distance: 145.02258276918147,
+      name: "",
+      location: [
+        26.150666,
+        44.437105,
+      ],
+      waypoint_index: 0,
+      trips_index: 0,
+ * },...],
+ * trips: [
+ * { geometry: {...},
+ *   legs : []
+ * }, ...]
+ * }
+ * @param {String} coordinates - a coordinates list string in format long,lat;
+ * @returns 
+ */
 async function fetchTSPRouting(coordinates) {
   const res = await fetch(buildOptimizeApiUri(coordinates));
   if (!res.ok) throw new Error(`Server error: ${res.status} - ${res.statusText}`);
   
   const data = await res.json();
-  if (data.code) {
+  if (data.code != "Ok") {
     throw new Error(`API returned error code: ${res.status} - ${data.code}`);
   }
   return data;
@@ -161,11 +183,38 @@ async function performSearch() {
   }
 }
 
+// Update your addRouteNumbers function
+function addRouteNumbers(waypoints) {
+  const selectedAttractions = manageSelectedAttractions.attractions;
+  waypoints.forEach((waypoint, index) => {
+    const order = waypoint.waypoint_index + 1;
+    const marker = allMarkers[index];
+    const labelMarker = markerLabels[index];
+    
+    if (marker && labelMarker) {
+      const attractionNameFromBackendResponse = marker.getPopup().getContent().replace(/<[^>]*>/g, '');
+      const attractionNameFromQuery = selectedAttractions[index].name;
+      
+      // Update popup with route order
+      marker.setPopupContent(`<strong>${order}. ${attractionNameFromQuery}</strong>`);
+      
+      // Update permanent label with route order
+      labelMarker.setIcon(L.divIcon({
+        className: 'marker-label route-label',
+        html: `<div class="label-content route-order">${order}. ${attractionNameFromQuery}</div>`,
+        iconSize: [150, 25],
+        iconAnchor: [75, -10]
+      }));
+    }
+  });
+}
+
 routingButton.addEventListener("click", async () => {
   if (!manageSelectedAttractions.enoughAttractionsToRoute) return manageAppExplanationParagraph.showNotEnoughAttractionsSelectedErrorMessage();
-  const geojsonFeature = await fetchTSPRouting(manageSelectedAttractions.coordinatesString);
+  const mapBoxOptimizeResponse = await fetchTSPRouting(manageSelectedAttractions.coordinatesString);
   manageAppExplanationParagraph.showDefaultAppSuccessMessage();
-  L.geoJSON(geojsonFeature, { style: { color: "blue", weight: 5 } }).addTo(map);
+  addRouteNumbers(mapBoxOptimizeResponse.waypoints);
+  L.geoJSON(mapBoxOptimizeResponse.trips[0].geometry, { style: { color: "blue", weight: 5 } }).addTo(map);
 })
 
 // Replaced the button and input events with the form submit event
@@ -241,8 +290,21 @@ suggestionList.addEventListener("click", (e) => {
     const newMarker = L.marker([lat, lon])
         .addTo(map)
         .bindPopup(`<strong>${name}</strong>`)
-        .openPopup();
-    allMarkers.push(newMarker)
+        // .openPopup();
+
+    // Create permanent label
+    const labelMarker = L.marker([lat, lon], {
+      icon: L.divIcon({
+          className: 'marker-label',
+          html: `<div class="label-content">${lastQuery || name}</div>`,
+          iconSize: [150, 25],
+          iconAnchor: [75, -10] // Position above the marker
+      }),
+      interactive: false // Don't interfere with map interactions
+    }).addTo(map);
+
+    allMarkers.push(newMarker);
+    markerLabels.push(labelMarker);
     fitAllMarkers();
   }
 });
@@ -258,4 +320,5 @@ function fitAllMarkers() {
   map.fitBounds(group.getBounds(), {
     padding: [20, 20] // Add 20px padding around the bounds
   });
+
 }

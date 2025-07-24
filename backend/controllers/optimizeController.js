@@ -44,11 +44,12 @@ export const optimizeController = async (req, res) => {
         }
       );
     logger.info(`MapBox API successfully retrieved a response with internal status code ${response.data.code}`, logObj(response.status, req, startTime));
-    if (response.status === 200 && response.data.code === "Ok"){
-      return res.status(200).json(response.data.trips[0].geometry);
-    } else {
-      return res.status(response.status).json(response.data);
-    }
+    return res.status(response.status).json(response.data);
+    // if (response.status === 200 && response.data.code === "Ok"){
+    //   return res.status(200).json(response.data.trips[0].geometry);
+    // } else {
+    //   return res.status(response.status).json(response.data);
+    // }
   } catch (error) {
     logger.error("Some error occurred during the MapBox Optimize API call", logObj(null, req, startTime, error));
     res.status(500).json(error);

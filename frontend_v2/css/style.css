@@ -303,3 +303,63 @@ form.search-attraction button.loading:hover {
     padding: 0.6rem;
   }
 }
+
+
+
+/* Permanent marker labels */
+.marker-label {
+    background: transparent;
+    border: none;
+    pointer-events: none; /* Don't block map interactions */
+}
+
+.label-content {
+    background: rgba(255, 255, 255, 0.95);
+    color: #333;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 12px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
+/* Enhanced styling for route order labels */
+.label-content.route-order {
+    background: rgba(33, 150, 243, 0.95);
+    color: white;
+    font-weight: bold;
+    border-color: #1976D2;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+    .label-content {
+        font-size: 11px;
+        padding: 3px 6px;
+        max-width: 120px;
+    }
+    
+    .label-content.route-order {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+    .label-content {
+        font-size: 10px;
+        padding: 2px 5px;
+        max-width: 100px;
+    }
+    
+    .label-content.route-order {
+        font-size: 11px;
+        padding: 3px 6px;
+    }
+}
