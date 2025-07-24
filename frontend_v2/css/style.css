@@ -1,365 +1,473 @@
-/* https://www.joshwcomeau.com/css/custom-css-reset/ */
+/* CSS Reset - https://www.joshwcomeau.com/css/custom-css-reset/ */
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
 * {
   margin: 0;
-  /* https://kittygiraudel.com/2020/05/18/using-calc-to-figure-out-optimal-line-height/ */
   line-height: calc(1em + 0.5rem);
   font-size: 18px;
 }
 
-/* body {
-  line-height: 1.5;
-} */
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
 
 input, button, textarea, select {
   font: inherit;
 }
 
-p, h1, h2, h3, h4, h5, h6 {
-  overflow-wrap: break-word;
-}
-
-p {
-  text-wrap: pretty;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  text-wrap: balance;
-}
-
-/* https://kilianvalkhof.com/2022/css-html/your-css-reset-needs-text-size-adjust-probably/ */
-html{
-  -moz-text-size-adjust: none;
-  -webkit-text-size-adjust: none;
-  text-size-adjust: none;
-}
-
-html, body {
-  height: 100%;
-}
-
+/* App container - full screen */
 #app-container {
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Map takes full screen */
+#map {
+  width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
 }
 
-#page-title {
-  margin: 0.5rem;
-  font-size: 1.5rem;
+/* Floating panels base styles */
+.floating-panel {
+  position: absolute;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  padding: 1rem;
+  max-width: 90vw;
 }
 
-.center-text {
+/* Message panel at the top */
+#message-panel {
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 600px;
   text-align: center;
+  border-left: 4px solid #2196F3;
 }
 
 #app-explanation {
-  margin: 0.5rem;
+  margin: 0;
+  font-size: 0.9rem;
+  color: #333;
+  line-height: 1.5;
 }
 
-#input-output-row {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-around;
-  align-items: center;
-  margin: 0.5rem 0;
-}
-
-#search-container {
-  margin-left: 0.25rem;
-  margin-right: 0.25rem;
-}
-
-#output-column {
-  margin-left: 0.25rem;
-  margin-right: 0.25rem;
-}
-
-#routing-button{
-  padding: 0.5rem;
-}
-
-#map {
-  flex: 1;
-  width: 100%;
-}
-
-/* #search-container {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 1000;
-  width: 300px;
-  background: #fff;
-  padding: 0.5rem;
-  border-radius: 4px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-}
-
-#search-input {
-  width: 100%;
-  padding: 0.5rem;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  border-radius: 2px;
-}
-
-#suggestions {
-  list-style: none;
-  margin: 0.5rem 0 0;
-  padding: 0;
-  max-height: 200px;
+/* Controls panel on the left */
+#controls-panel {
+  top: 20px;
+  left: 20px;
+  width: 350px;
+  max-height: calc(100vh - 40px);
   overflow-y: auto;
-  border: 1px solid #ccc;
-  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-#suggestions li {
-  padding: 0.5rem;
-  cursor: pointer;
+/* Search container styles */
+#search-container {
+  position: relative;
 }
-
-#suggestions li:hover {
-  background: #f0f0f0;
-} */
 
 #search-attraction-form {
-  width: 500px;
-  max-width:500px;
+  width: 100%;
+  max-width: none;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
 }
 
 form.search-attraction input[type=text] {
-  padding: 0.5rem;
-  border: 1px solid grey;
-  float: left;
-  width: 80%;
-  background: #f1f1f1;
+  padding: 0.75rem;
+  border: none;
+  flex: 1;
+  background: white;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+form.search-attraction input[type=text]:focus {
+  box-shadow: inset 0 0 0 2px #2196F3;
 }
 
 form.search-attraction button {
-  float: left;
-  width: 20%;
-  padding: 0.5rem;
+  width: 50px;
+  padding: 0.75rem;
   background: #2196F3;
   color: white;
-  border: 1px solid grey;
-  border-left: none;
+  border: none;
   cursor: pointer;
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 form.search-attraction button:hover {
-  background: #0b7dda;
+  background: #1976D2;
 }
 
-form.search-attraction::after {
-  content: "";
-  clear: both;
-  display: table;
+form.search-attraction button:active {
+  background: #1565C0;
 }
 
-/* Add these styles to your existing style.css */
-
-#search-container {
-  margin-left: 0.25rem;
-  margin-right: 0.25rem;
-  position: relative; /* Add this for dropdown positioning */
-}
-
+/* Suggestions dropdown */
 #suggestions {
   position: absolute;
-  top: 100%; /* Position right below the form */
+  top: 100%;
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: 1001;
   list-style: none;
   margin: 0;
   padding: 0;
-  max-height: 200px;
+  max-height: 250px;
   overflow-y: auto;
   background: white;
-  border: 1px solid #ccc;
-  border-top: none; /* Connect visually to the search form */
-  border-radius: 0 0 4px 4px; /* Round bottom corners only */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  /* Match the form width */
-  width: 100%;
-  max-width: 500px;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-top: 1px solid #eee;
 }
 
 #suggestions li {
   padding: 0.75rem;
   cursor: pointer;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #f5f5f5;
   transition: background-color 0.2s ease;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #333;
 }
 
 #suggestions li:last-child {
   border-bottom: none;
+  border-radius: 0 0 8px 8px;
 }
 
 #suggestions li:hover {
-  background-color: #f5f5f5;
+  background-color: #f8f9fa;
 }
 
-#suggestions li:active,
-#suggestions li.selected {
+#suggestions li:active {
   background-color: #2196F3;
   color: white;
 }
 
-/* Style for "no results" or error messages */
-#suggestions li.no-results {
-  color: #666;
+/* Special styling for "None of the above" option */
+#suggestions li[data-id="-1"] {
+  background-color: #f8f9fa;
   font-style: italic;
-  cursor: default;
+  color: #666;
+  border-top: 1px solid #ddd;
 }
 
-#suggestions li.no-results:hover {
-  background-color: transparent;
+#suggestions li[data-id="-1"]:hover {
+  background-color: #e9ecef;
 }
 
-/* Enhance the search form to connect better with dropdown */
-form.search-attraction {
-  max-width: 500px;
-  border-radius: 4px 4px 0 0; /* Round top corners when dropdown is open */
-  transition: border-radius 0.2s ease;
+/* Attractions section */
+#attractions-section {
+  background: rgba(248, 249, 250, 0.8);
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* When suggestions are visible, adjust form styling */
-#search-container:has(#suggestions:not([hidden])) form.search-attraction {
-  border-radius: 4px 4px 0 0;
-}
-
-#search-container:has(#suggestions:not([hidden])) form.search-attraction input[type=text] {
-  border-bottom-left-radius: 0;
-}
-
-#search-container:has(#suggestions:not([hidden])) form.search-attraction button {
-  border-bottom-right-radius: 0;
-}
-
-/* Loading state for search button */
-form.search-attraction button.loading {
-  background: #666;
-  cursor: not-allowed;
-}
-
-form.search-attraction button.loading:hover {
-  background: #666;
-}
-
-/* Attraction list */
-/* #attractions-list {
-    margin-bottom: 1rem;
-}
-
-#attractions-list h3 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1rem;
-    color: #333;
+#attractions-section h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  color: #333;
+  font-weight: 600;
 }
 
 #attractions-items {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    max-height: 200px;
-    overflow-y: auto;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 #attractions-items li {
-    background: #f5f5f5;
-    margin-bottom: 0.5rem;
-    padding: 0.75rem;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-} 
-
-#attractions-items li:hover {
-    background: #e9e9e9;
-} */
-/* Attraction list */
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  #search-attraction-form {
-    max-width: 250px;
-  }
-  
-  #suggestions {
-    max-width: 250px;
-    font-size: 0.85rem;
-  }
-  
-  #suggestions li {
-    padding: 0.6rem;
-  }
+  background: white;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+  word-wrap: break-word;
 }
 
+#attractions-items li:hover {
+  background: #f8f9fa;
+  border-color: #2196F3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
 
+#attractions-items li:last-child {
+  margin-bottom: 0;
+}
 
-/* Permanent marker labels */
+#attractions-items:empty::after {
+  content: "No attractions selected";
+  color: #666;
+  font-style: italic;
+  padding: 1rem;
+  display: block;
+  text-align: center;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  border: 1px dashed #ccc;
+}
+
+#routing-button {
+  width: 100%;
+  padding: 0.75rem;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+#routing-button:hover {
+  background: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#routing-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+#routing-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Marker label styles for permanent labels */
 .marker-label {
-    background: transparent;
-    border: none;
-    pointer-events: none; /* Don't block map interactions */
+  background: transparent;
+  border: none;
+  pointer-events: none;
 }
 
 .label-content {
-    background: rgba(255, 255, 255, 0.95);
-    color: #333;
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    font-size: 12px;
-    text-align: center;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 140px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #333;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 12px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Enhanced styling for route order labels */
 .label-content.route-order {
-    background: rgba(33, 150, 243, 0.95);
-    color: white;
-    font-weight: bold;
-    border-color: #1976D2;
+  background: rgba(33, 150, 243, 0.95);
+  color: white;
+  font-weight: bold;
+  border-color: #1976D2;
+  max-width: 160px;
 }
 
-/* Mobile-specific adjustments */
+/* Scrollbar styling for webkit browsers */
+#attractions-items::-webkit-scrollbar,
+#suggestions::-webkit-scrollbar,
+#controls-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+#attractions-items::-webkit-scrollbar-track,
+#suggestions::-webkit-scrollbar-track,
+#controls-panel::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+#attractions-items::-webkit-scrollbar-thumb,
+#suggestions::-webkit-scrollbar-thumb,
+#controls-panel::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+#attractions-items::-webkit-scrollbar-thumb:hover,
+#suggestions::-webkit-scrollbar-thumb:hover,
+#controls-panel::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Loading states */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #2196F3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Focus states for accessibility */
+button:focus,
+input:focus {
+  outline: 2px solid #2196F3;
+  outline-offset: 2px;
+}
+
+#suggestions li:focus {
+  background-color: #2196F3;
+  color: white;
+  outline: none;
+}
+
+/* Mobile responsive */
 @media (max-width: 768px) {
-    .label-content {
-        font-size: 11px;
-        padding: 3px 6px;
-        max-width: 120px;
-    }
-    
-    .label-content.route-order {
-        font-size: 12px;
-        padding: 4px 8px;
-    }
+  .floating-panel {
+    margin: 10px;
+    max-width: calc(100vw - 20px);
+  }
+  
+  #message-panel {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    transform: none;
+    max-width: none;
+  }
+  
+  #controls-panel {
+    top: auto;
+    bottom: 20px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-height: 50vh;
+  }
+  
+  #attractions-items {
+    max-height: 150px;
+  }
+  
+  #suggestions {
+    max-height: 200px;
+  }
+  
+  form.search-attraction input[type=text] {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
 }
 
 /* Very small screens */
 @media (max-width: 480px) {
-    .label-content {
-        font-size: 10px;
-        padding: 2px 5px;
-        max-width: 100px;
-    }
-    
-    .label-content.route-order {
-        font-size: 11px;
-        padding: 3px 6px;
-    }
+  .floating-panel {
+    padding: 0.75rem;
+    border-radius: 8px;
+  }
+  
+  #controls-panel {
+    bottom: 10px;
+    max-height: 60vh;
+  }
+  
+  form.search-attraction input[type=text],
+  form.search-attraction button {
+    padding: 0.6rem;
+    font-size: 0.85rem;
+  }
+  
+  #attractions-items li {
+    padding: 0.6rem;
+    font-size: 0.8rem;
+  }
+  
+  #routing-button {
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+  
+  .label-content {
+    font-size: 10px;
+    padding: 2px 5px;
+    max-width: 100px;
+  }
+  
+  .label-content.route-order {
+    font-size: 11px;
+    padding: 3px 6px;
+    max-width: 110px;
+  }
+}
+
+/* Landscape mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  #controls-panel {
+    max-height: 40vh;
+  }
+  
+  #attractions-items {
+    max-height: 100px;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .label-content {
+    border-width: 0.5px;
+  }
+}
+
+/* Dark mode support (if needed later) */
+@media (prefers-color-scheme: dark) {
+  /* Add dark mode styles here if needed */
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

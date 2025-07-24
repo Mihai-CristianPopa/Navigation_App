@@ -10,17 +10,26 @@ const backendOrigin = await resolveBackendOrigin();
 if (backendOrigin) {
   // By default the search container is hidden. Whenever there is a backend available
   // Show the search container
-  const inputOutputRow = document.getElementById("input-output-row");
-  inputOutputRow.hidden = false;
+  // const inputOutputRow = document.getElementById("input-output-row");
+  // inputOutputRow.hidden = false;
+  document.getElementById("controls-panel").hidden = false;
   manageAppExplanationParagraph.showDefaultAppSuccessMessage();
 } else {
   // Add a message for the users that the map searching will not work
   manageAppExplanationParagraph.showBackendNotAvailableMessage();
 }
-manageAppExplanationParagraph.makeVisible(true);
+// manageAppExplanationParagraph.makeVisible(true);
+document.getElementById("message-panel").hidden = false;
 // appExplanationParagraph.hidden = false;
 // Initialize Map at University of Bucharest
-var map = L.map("map").setView([44.435423, 26.102287], 19); // Default view (Bucharest)
+var map = L.map("map", {
+  zoomControl: false // Disable default zoom control
+}).setView([44.435423, 26.102287], 19);
+
+// Add zoom control to the right side
+L.control.zoom({
+  position: "topright" // Options: "topleft", "topright", "bottomleft", "bottomright"
+}).addTo(map);
 
 // Add OpenStreetMap Tiles
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -192,7 +201,7 @@ function addRouteNumbers(waypoints) {
     const labelMarker = markerLabels[index];
     
     if (marker && labelMarker) {
-      const attractionNameFromBackendResponse = marker.getPopup().getContent().replace(/<[^>]*>/g, '');
+      const attractionNameFromBackendResponse = marker.getPopup().getContent().replace(/<[^>]*>/g, "");
       const attractionNameFromQuery = selectedAttractions[index].name;
       
       // Update popup with route order
@@ -200,7 +209,7 @@ function addRouteNumbers(waypoints) {
       
       // Update permanent label with route order
       labelMarker.setIcon(L.divIcon({
-        className: 'marker-label route-label',
+        className: "marker-label route-label",
         html: `<div class="label-content route-order">${order}. ${attractionNameFromQuery}</div>`,
         iconSize: [150, 25],
         iconAnchor: [75, -10]
@@ -295,7 +304,7 @@ suggestionList.addEventListener("click", (e) => {
     // Create permanent label
     const labelMarker = L.marker([lat, lon], {
       icon: L.divIcon({
-          className: 'marker-label',
+          className: "marker-label",
           html: `<div class="label-content">${lastQuery || name}</div>`,
           iconSize: [150, 25],
           iconAnchor: [75, -10] // Position above the marker

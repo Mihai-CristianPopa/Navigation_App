@@ -4,36 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Map Navigation App</title>
-    <!-- Probably the next stylesheet can be removed -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <link rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
         crossorigin=""/>
-    <!-- This is used for the search icon as per https://www.w3schools.com/howto/howto_css_search_button.asp -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <!-- Own files -->
     <link rel="stylesheet" href="./css/style.css" />
-    <!-- <script type="module" src="./js/checkBackend.js"></script>
-    <script type="module" src="./js/attractionManager.js"></script> -->
     <script type="module" src="./js/main.js"></script>
 </head>
 <body>
     <div id="app-container">
-        <!-- Flexbox Row 1 -->
-        <header class="center-text">
-            <h1 id="page-title">Map Navigation</h1>
-        </header>
-
-        <!-- Flexbox Row 2 -->
-        <p class="center-text"
-            id="app-explanation"
-            hidden>
-        </p>
+        <!-- Full-screen map -->
+        <div id="map"></div>
         
-        <!-- Flexbox Row 3 which should be another flexbox with Two Columns -->
-        <div id="input-output-row" hidden>
-            <!-- Column 1 Search Bar -->
+        <!-- Floating message panel at the top -->
+        <div id="message-panel" class="floating-panel" hidden>
+            <p id="app-explanation"></p>
+        </div>
+        
+        <!-- Floating controls panel -->
+        <div id="controls-panel" class="floating-panel" hidden>
+            <!-- Search Container -->
             <div id="search-container">
                 <form id="search-attraction-form" class="search-attraction" autocomplete="off">
                     <input id="search-input"
@@ -50,21 +40,16 @@
                 </form>
                 <ul id="suggestions" hidden role="listbox" aria-label="Search suggestions"></ul>
             </div>
-            <!-- Column 2 Output box -->
-            <div id="output-column">
-                <div id="attractions-list">
-                    <h3>Selected Attractions</h3>
-                    <ul id="attractions-items"></ul>
-                </div>
+            
+            <!-- Attractions List -->
+            <div id="attractions-section">
+                <h4>Selected Attractions</h4>
+                <ul id="attractions-items"></ul>
                 <button id="routing-button">Get routing</button>
             </div>
         </div>
-
-        <!-- Flexbox Row 4 -->
-        <div id="map"></div>
     </div>
-    <!-- Probably the next script can be removed -->
-    <!-- <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> -->
+    
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
         crossorigin="">
