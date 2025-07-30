@@ -1,0 +1,31 @@
+# First make sure to delete the user
+DELETE http://localhost:3000/authentication/delete-user?email=michaelScott%40dundermifflin.com HTTP/1.1
+content-type: application/json
+
+
+# Then do the registration
+POST http://localhost:3000/authentication/register HTTP/1.1
+content-type: application/json
+
+{
+    "email": "michaelScott@dundermifflin.com",
+    "password": "davidWallaceIsAFool"
+}
+
+###
+# Failed request due to missing email address
+POST http://localhost:3000/authentication/register HTTP/1.1
+content-type: application/json
+
+{
+    "password": "davidWallaceIsAFool"
+}
+
+###
+# Failed request due to missing password
+POST http://localhost:3000/authentication/register HTTP/1.1
+content-type: application/json
+
+{
+    "email": "michaelScott@dundermifflin.com"
+}

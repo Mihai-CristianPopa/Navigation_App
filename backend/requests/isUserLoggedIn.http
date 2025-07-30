@@ -1,0 +1,27 @@
+@baseUrl = http://localhost:3000
+@email = michaelScott@dundermifflin.com
+@password = davidWallaceIsAFool
+
+### 1. Login and capture session
+# @name login
+POST {{baseUrl}}/authentication/login HTTP/1.1
+content-type: application/json
+
+{
+    "email": "{{email}}",
+    "password": "{{password}}"
+}
+
+### 2. Extract session ID from login response cookies
+@fullCookie = {{login.response.headers.set-cookie}}
+
+### 3. Use session for checking whether the user is logged in or not
+GET {{baseUrl}}/authentication/me HTTP/1.1
+Cookie: {{fullCookie}}
+
+### 4. Clear the session first (logout)
+POST {{baseUrl}}/authentication/logout HTTP/1.1
+Cookie: {{fullCookie}}
+
+### 5. Trying to see if a user is logged in without sending any cookie
+GET {{baseUrl}}/authentication/me HTTP/1.1

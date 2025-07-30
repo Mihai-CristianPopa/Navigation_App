@@ -40,11 +40,12 @@ export async function getDailyApiRequestCount(apiProvider, date = null) {
     }
 }
 
-// Only needed to be ran once
-export async function createClearingIndex() {
-    const db = dbClient.db("geocoding_results");
-    const collection = db.collection("api_requests");
-    return collection.createIndex("timestamp", {
-        expireAfterSeconds: 2 * 24 * 60 * 60
-    });
-}
+// // Only needed to be ran once
+// export async function createClearingIndex() {
+//     const db = dbClient.db("geocoding_results");
+//     const collection = db.collection("api_requests");
+//     collection.indexExists
+//     return collection.createIndex("timestamp", {
+//         expireAfterSeconds: 2 * 24 * 60 * 60
+//     });
+// }
