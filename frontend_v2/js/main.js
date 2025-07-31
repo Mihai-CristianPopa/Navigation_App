@@ -1,25 +1,65 @@
 import resolveBackendOrigin from "./checkBackend.js";
 import AttractionManager from "./attractionManager.js";
 import MessageManager from "./messageManager.js";
+import authService from "./authService.js";
+import AuthUI from "./authUI.js";
 
 const manageSelectedAttractions = new AttractionManager(document.getElementById("attractions-items"));
 const manageAppExplanationParagraph = new MessageManager(document.getElementById("app-explanation"));
+const authUI = new AuthUI(manageAppExplanationParagraph);
 
-const backendOrigin = await resolveBackendOrigin();
-// const appExplanationParagraph = document.getElementById("app-explanation");
-if (backendOrigin) {
-  // By default the search container is hidden. Whenever there is a backend available
-  // Show the search container
-  // const inputOutputRow = document.getElementById("input-output-row");
-  // inputOutputRow.hidden = false;
-  document.getElementById("controls-panel").hidden = false;
-  manageAppExplanationParagraph.showDefaultAppSuccessMessage();
-} else {
-  // Add a message for the users that the map searching will not work
-  manageAppExplanationParagraph.showBackendNotAvailableMessage();
+// // Initialize authentication first
+async function initializeApp() {
+  const backendAvailable = await authService.initialize();
+  
+  if (backendAvailable) {
+    if (authService.isAuthenticated) {
+//       // User is already logged in
+      authUI.showUserPanel(authService.user);
+      showSearchPanelAndMessagePanel();
+    } else {
+//       // User needs to authenticate
+      authUI.showAuthPanel();
+      hideSearchPanelAndMessagePanel();
+    }
+  } else {
+    // Backend not available - show limited functionality
+    manageAppExplanationParagraph.showBackendNotAvailableMessage();
+    document.getElementById("used-for-hiding-message-panel").hidden = false;
+    // hideSearchPanelAndMessagePanel();
+  }
 }
-// manageAppExplanationParagraph.makeVisible(true);
-document.getElementById("message-panel").hidden = false;
+
+function showSearchPanelAndMessagePanel() {
+  document.getElementById("used-for-hiding-controls-panel").hidden = false;
+  document.getElementById("used-for-hiding-message-panel").hidden = false;
+  manageAppExplanationParagraph.showDefaultAppSuccessMessage();
+}
+
+function hideSearchPanelAndMessagePanel() {
+  document.getElementById("used-for-hiding-controls-panel").hidden = true;
+  document.getElementById("used-for-hiding-message-panel").hidden = true;
+}
+
+// // Wait for authentication before initializing the app
+initializeApp();
+const backendOrigin = authService.backendOrigin;
+
+// const backendOrigin = await resolveBackendOrigin();
+// const appExplanationParagraph = document.getElementById("app-explanation");
+// if (backendOrigin) {
+//   // By default the search container is hidden. Whenever there is a backend available
+//   // Show the search container
+//   // const inputOutputRow = document.getElementById("input-output-row");
+//   // inputOutputRow.hidden = false;
+//   document.getElementById("used-for-hiding-controls-panel").hidden = false;
+//   manageAppExplanationParagraph.showDefaultAppSuccessMessage();
+// } else {
+//   // Add a message for the users that the map searching will not work
+//   manageAppExplanationParagraph.showBackendNotAvailableMessage();
+// }
+// // manageAppExplanationParagraph.makeVisible(true);
+// document.getElementById("used-for-hiding-message-panel").hidden = false;
 // appExplanationParagraph.hidden = false;
 // Initialize Map at University of Bucharest
 var map = L.map("map", {
@@ -28,7 +68,7 @@ var map = L.map("map", {
 
 // Add zoom control to the right side
 L.control.zoom({
-  position: "topright" // Options: "topleft", "topright", "bottomleft", "bottomright"
+  position: "bottomright" // Options: "topleft", "topright", "bottomleft", "bottomright"
 }).addTo(map);
 
 // Add OpenStreetMap Tiles

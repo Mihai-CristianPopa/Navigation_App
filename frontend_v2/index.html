@@ -16,36 +16,101 @@
         <!-- Full-screen map -->
         <div id="map"></div>
         
+        <!-- Authentication Panel -->
+        <div id="used-for-hiding-auth-panel" hidden>
+            <div id="auth-panel" class="floating-panel">
+                <div id="auth-content">
+                    <h3 id="auth-title">Welcome to Navigation App</h3>
+                    <p id="auth-description">Please sign in to access full features</p>
+                    
+                    <!-- Login Form -->
+                    <div id="used-for-hiding-login-form">
+                        <form id="login-form" class="auth-form">
+                            <div class="form-group">
+                                <label for="login-email">Email:</label>
+                                <input type="email" id="login-email" required autocomplete="email">
+                            </div>
+                            <div class="form-group">
+                                <label for="login-password">Password:</label>
+                                <!-- <input type="password" id="login-password" required autocomplete="current-password"> -->
+                                <input type="password" id="login-password">
+                            </div>
+                            <button type="submit" class="auth-button primary">Sign In</button>
+                            <button type="button" id="show-register" class="auth-button secondary">Need an account? Register</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Register Form -->
+                    <div id="used-for-hiding-register-form" hidden>
+                        <form id="register-form" class="auth-form">
+                            <div class="form-group">
+                                <label for="register-email">Email:</label>
+                                <input type="email" id="register-email" required autocomplete="email">
+                            </div>
+                            <div class="form-group">
+                                <label for="register-password">Password:</label>
+                                <input type="password" id="register-password" required autocomplete="new-password" minlength="8">
+                            </div>
+                            <div class="form-group">
+                                <label for="register-confirm-password">Confirm Password:</label>
+                                <input type="password" id="register-confirm-password" required autocomplete="new-password" minlength="8">
+                            </div>
+                            <button type="submit" class="auth-button primary">Create Account</button>
+                            <button type="button" id="show-login" class="auth-button secondary">Already have an account? Sign In</button>
+                        </form>
+                    </div>
+                    
+                    <div id="auth-error" class="error-message" hidden></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- User Info Panel (when authenticated) -->
+        <div id="used-for-hiding-user-panel" hidden>
+            <div id="user-panel" class="floating-panel">
+                <div id="user-info">
+                    <span id="user-email"></span>
+                    <button id="logout-button" class="auth-button secondary">
+                        <i class="fa fa-sign-out"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+        
         <!-- Floating message panel at the top -->
-        <div id="message-panel" class="floating-panel" hidden>
-            <p id="app-explanation"></p>
+        <div id="used-for-hiding-message-panel" hidden>
+            <div id="message-panel" class="floating-panel">
+                <p id="app-explanation"></p>
+            </div>
         </div>
         
         <!-- Floating controls panel -->
-        <div id="controls-panel" class="floating-panel" hidden>
-            <!-- Search Container -->
-            <div id="search-container">
-                <form id="search-attraction-form" class="search-attraction" autocomplete="off">
-                    <input id="search-input"
-                        type="text"
-                        placeholder="Search for an attraction…" 
-                        autocomplete="off"
-                        aria-expanded="false"
-                        aria-haspopup="listbox"
-                        role="combobox"
-                    >
-                    <button id="search-button" type="submit" aria-label="Search">
-                        <i class="fa fa-search"></i>
-                    </button>
-                </form>
-                <ul id="suggestions" hidden role="listbox" aria-label="Search suggestions"></ul>
-            </div>
-            
-            <!-- Attractions List -->
-            <div id="attractions-section">
-                <h4>Selected Attractions</h4>
-                <ul id="attractions-items"></ul>
-                <button id="routing-button">Get routing</button>
+        <div id="used-for-hiding-controls-panel" hidden>
+            <div id="controls-panel" class="floating-panel">
+                <!-- Search Container -->
+                <div id="search-container">
+                    <form id="search-attraction-form" class="search-attraction" autocomplete="off">
+                        <input id="search-input"
+                            type="text"
+                            placeholder="Search for an attraction…" 
+                            autocomplete="off"
+                            aria-expanded="false"
+                            aria-haspopup="listbox"
+                            role="combobox"
+                        >
+                        <button id="search-button" type="submit" aria-label="Search">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </form>
+                    <ul id="suggestions" hidden role="listbox" aria-label="Search suggestions"></ul>
+                </div>
+                
+                <!-- Attractions List -->
+                <div id="attractions-section">
+                    <h4>Selected Attractions</h4>
+                    <ul id="attractions-items"></ul>
+                    <button id="routing-button">Get routing</button>
+                </div>
             </div>
         </div>
     </div>

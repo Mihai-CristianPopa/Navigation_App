@@ -4,20 +4,21 @@ const SESSION_COOKIE_NAME = 'sid';
 
 const sessionExpirationTimeInMiliseconds = 24 * 60 * 60 * 1000;
 
-const SESSION_COOKIE_OPTIONS = {
-//   // domain:   '.example.com',  // valid on any *.example.com
+const COOKIE_BASE_OPTIONS = {
   httpOnly: true,
   sameSite: 'none',
+  secure: true,
   path: '/',
-//   secure: process.env.NODE_ENV === 'production',
+};
+
+const SESSION_COOKIE_OPTIONS = {
+//   // domain:   '.example.com',  // valid on any *.example.com
+  ...COOKIE_BASE_OPTIONS,
   maxAge: sessionExpirationTimeInMiliseconds
 };
 
 const SESSION_CLEAR_OPTIONS = {
-  httpOnly: true,
-  sameSite: 'none',
-  path: '/',
-//   secure: process.env.NODE_ENV === 'production'
+  ...COOKIE_BASE_OPTIONS
 };
 
 export const setSessionCookie = (res, sessionId) => {

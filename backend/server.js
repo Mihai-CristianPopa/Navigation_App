@@ -14,7 +14,10 @@ const port = config.port;
 const frontendOrigin = config.frontendOrigin;
 
 // Middleware
-app.use(cors({ origin: [frontendOrigin, "http://127.0.0.1:5500"] }));
+app.use(cors({
+  origin: [frontendOrigin, "http://127.0.0.1:5500"],
+  credentials: true
+}));
 app.use(express.json());
 app.use(cookieParser());
 
