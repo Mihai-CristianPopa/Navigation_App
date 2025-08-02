@@ -1,4 +1,4 @@
-import { EVENTS } from "./constants.js";
+import { EVENTS, CURRENT_LOCATION } from "./constants.js";
 
 export default class MapManager {
   /**
@@ -8,7 +8,9 @@ export default class MapManager {
    * @param {string} zoomPosition - Options: "topleft", "topright", "bottomleft", "bottomright"
    */
   constructor(mapContainerId, coordinates, zoom, zoomPosition) {
-    this._baseCoordinated = coordinates;
+    this._baseCoordinates = coordinates;
+    this._locationRadius = 0;
+    this._locationId = null;
     this._baseZoom = zoom;
     this._popupMarkers = [];
     this._permanentLabelMarkers = [];
@@ -18,39 +20,21 @@ export default class MapManager {
     this._map = this._initMap(mapContainerId);
     this._setupEventListeners();
     this._locateUser();
-    // if (!this._userLocationFetched) {
-    //   this._setBaseView();
-    // }
     this._addZoomControl(zoomPosition);
     this._addTileLayer();
   };
 
   _setupEventListeners() {
     this._map.on("locationfound", (e) => {
-      const radius = e.accuracy / 2;
-      
-      const locationData = {
-        coordinates: [e.latlng.lat, e.latlng.lng],
-        attractionDetails: {
-          id: `user-location-${Date.now()}`,
-          name: "Current location",
-          lat: e.latlng.lat,
-          lon: e.latlng.lng,
-        },
-        description: `Your current location is within ${radius} meters.`
-      };
+      this._locationRadius = e.accuracy / 2;
 
-      this.addNewlySelectedAttractionMarkers(
-        locationData.coordinates,
-        locationData.attractionDetails.name,
-        locationData.description
-      );
+      this._baseCoordinates = [e.latlng.lat, e.latlng.lng];
 
       this._userLocationFetched = true;
-      const locationFoundEvent = new CustomEvent(EVENTS.USER_LOCATION_FOUND, {
-        detail: locationData.attractionDetails
-      });
-      document.dispatchEvent(locationFoundEvent);
+
+      this._locationId = CURRENT_LOCATION.id();
+
+      this._addCurrentLocationToMapAndTriggerAttractionAdditionEvent();
     });
 
     this._map.on("locationerror", (e) => {
@@ -80,6 +64,7 @@ export default class MapManager {
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap contributors"
     }).addTo(this._map);
+    this._map.r
   };
 
   /** @description Function to fit all markers in view */
@@ -164,22 +149,57 @@ export default class MapManager {
     }
   }
 
+  _addCurrentLocationToMapAndTriggerAttractionAdditionEvent() {
+    this.addNewlySelectedAttractionMarkers(
+        this._baseCoordinates,
+        CURRENT_LOCATION.name,
+        CURRENT_LOCATION.description(this._locationRadius)
+      );
+    const locationFoundEvent = new CustomEvent(EVENTS.USER_LOCATION_FOUND, {
+        detail: {
+          id: this._locationId,
+          name: CURRENT_LOCATION.name,
+          lat: this._baseCoordinates[0],
+          lon: this._baseCoordinates[1],
+        }
+      });
+      document.dispatchEvent(locationFoundEvent);
+  }
+
   /** @description Clears the map whenever a user wants to log out. */
   resetMap() {
     this.clearLastRoute();
-    this._setBaseView();
+    this._removeMarkersFromMap(this._popupMarkers);
+    this._removeMarkersFromMap(this._permanentLabelMarkers);
+    
+    document.dispatchEvent(new CustomEvent(EVENTS.REMOVE_ATTRACTIONS));
+
     this._popupMarkers = [];
     this._permanentLabelMarkers = [];
+
+    // On the scenario where user shared his location we want to readd
+    // his location as first attraction in list
+    if (this._userLocationFetched) {
+      this._addCurrentLocationToMapAndTriggerAttractionAdditionEvent();
+    }
+
+    this._setBaseView();
   }
 
   _setBaseView() {
-    this._map.setView(this._baseCoordinated, this._baseZoom);
+    this._map.setView(this._baseCoordinates, this._baseZoom);
   }
 
   _addPopupMarker(coordinates, popupContent) {
     const newMarker = L.marker(coordinates).addTo(this._map).bindPopup(`<strong>${popupContent}</strong>`);
     this._popupMarkers.push(newMarker);
   };
+
+  _removeMarkersFromMap(markersArray) {
+    for (const marker of markersArray) {
+      this._map.removeLayer(marker);
+    }
+  }
 
   _addPermanentLabelMarker(coordinates, permanentText) {
     const newMarker = L.marker(coordinates, {

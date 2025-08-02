@@ -202,7 +202,8 @@ form.search-attraction button:active {
 
 #attractions-items li {
   background: white;
-  margin-bottom: 0.5rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
   padding: 0.75rem;
   border-radius: 6px;
   font-size: 0.85rem;
@@ -235,8 +236,14 @@ form.search-attraction button:active {
   border: 1px dashed #ccc;
 }
 
+#routing-buttons-container {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
 #routing-button {
-  width: 100%;
+  flex: 1;
   padding: 0.75rem;
   background: #4CAF50;
   color: white;
@@ -254,16 +261,23 @@ form.search-attraction button:active {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-#routing-button:active {
-  transform: translateY(0);
-  box-shadow: none;
+#clear-route-button {
+  flex: 1;
+  padding: 0.75rem;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
 }
 
-#routing-button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+#clear-route-button:hover {
+  background: #d32f2f;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Marker label styles for permanent labels */
@@ -422,7 +436,13 @@ input:focus {
     font-size: 0.8rem;
   }
   
-  #routing-button {
+#routing-buttons-container {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  #routing-button,
+  #clear-route-button {
     padding: 0.6rem;
     font-size: 0.9rem;
   }
@@ -469,6 +489,18 @@ input:focus {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 320px) {
+  #routing-buttons-container {
+    gap: 0.25rem;
+  }
+  
+  #routing-button,
+  #clear-route-button {
+    padding: 0.5rem;
+    font-size: 0.85rem;
   }
 }
 

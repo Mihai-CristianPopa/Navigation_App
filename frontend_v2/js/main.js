@@ -167,13 +167,17 @@ document.getElementById("routing-button").addEventListener("click", async () => 
   const mapBoxOptimizeResponse = await geocodingRequestManager.fetchTSPRouting(manageSelectedAttractions.coordinatesString);
   manageAppExplanationParagraph.showDefaultAppSuccessMessage();
   mapManager.showRouteWithNumberedMarkers(manageSelectedAttractions.attractions, mapBoxOptimizeResponse.waypoints, mapBoxOptimizeResponse.trips[0].geometry);
-})
+});
+
+document.getElementById("clear-route-button").addEventListener("click", () => mapManager.resetMap());
 
 // Replaced the button and input events with the form submit event
 document.getElementById("search-attraction-form").addEventListener("submit", (e) => {
   e.preventDefault();
   performSearch();
 });
+
+document.addEventListener(EVENTS.REMOVE_ATTRACTIONS, () => manageSelectedAttractions.removeAllAttractions());
 
 document.addEventListener(EVENTS.USER_LOCATION_FOUND, (e) => {
   manageSelectedAttractions.addAttractionToContainer(e.detail);
