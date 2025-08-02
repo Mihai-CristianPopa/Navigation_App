@@ -3,7 +3,8 @@ import { registerController } from "../controllers/registerController.js";
 import { deleteUserController } from "../controllers/deleteUserController.js";
 import { loginController } from "../controllers/loginController.js";
 import { logoutController } from "../controllers/logoutController.js";
-import {  isUserloggedInController } from "../controllers/isUserLoggedInController.js";
+import { isUserloggedInController } from "../controllers/isUserLoggedInController.js";
+import { requireAuthentication } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -31,6 +32,12 @@ router.post("/register", registerController);
 
 router.delete("/delete-user", deleteUserController);
 
-router.get("/me", isUserloggedInController)
+router.get("/me", requireAuthentication, (req, res) => {
+  return res.status(200).json({
+      success: true,
+      authenticated: true,
+      user: req.user
+    });
+});
 
 export default router;

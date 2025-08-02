@@ -1,4 +1,5 @@
 import authService from './authService.js';
+import { clearUserState } from "./main.js";
 
 class AuthUI {
   constructor(manageAppExplanationParagraph) {
@@ -176,7 +177,8 @@ class AuthUI {
       document.body.classList.remove('authenticated');
       
       // Clear any app state if needed
-      this.clearAppState();
+      clearUserState();
+      // this.clearAppState();
     } catch (error) {
       console.error('Logout error:', error);
       // Still show auth panel even if logout request failed

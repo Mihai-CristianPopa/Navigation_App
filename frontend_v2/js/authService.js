@@ -1,4 +1,5 @@
 import resolveBackendOrigin from "./checkBackend.js";
+import { EVENTS } from "./constants.js";
 
 class AuthService {
   constructor() {
@@ -9,6 +10,12 @@ class AuthService {
 
   async initialize() {
     this._backendOrigin = await resolveBackendOrigin();
+    const backendOriginFetchedEvent = new CustomEvent(EVENTS.BACKEND_ORIGIN_FETCHED, {
+        detail: {
+          backendOrigin: this._backendOrigin
+        }
+    });
+    document.dispatchEvent(backendOriginFetchedEvent);
     if (this._backendOrigin) {
       await this.checkAuthStatus();
     }

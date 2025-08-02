@@ -3,14 +3,18 @@ import AttractionManager from "./attractionManager.js";
 import MessageManager from "./messageManager.js";
 import authService from "./authService.js";
 import AuthUI from "./authUI.js";
+import ServiceUri from "./serviceUri.js";
+import MapManager from "./mapManager.js";
+import { EVENTS } from "./constants.js";
 
 const manageSelectedAttractions = new AttractionManager(document.getElementById("attractions-items"));
 const manageAppExplanationParagraph = new MessageManager(document.getElementById("app-explanation"));
 const authUI = new AuthUI(manageAppExplanationParagraph);
+const geocodingRequestManager = new ServiceUri();
 
 // // Initialize authentication first
 async function initializeApp() {
-  const backendAvailable = await authService.initialize();
+const backendAvailable = await authService.initialize();
   
   if (backendAvailable) {
     if (authService.isAuthenticated) {
@@ -41,9 +45,30 @@ function hideSearchPanelAndMessagePanel() {
   document.getElementById("used-for-hiding-message-panel").hidden = true;
 }
 
-// // Wait for authentication before initializing the app
+export function clearUserState() {
+  clearSuggestions();
+
+  // clearLastRoute();
+  // mapManager.clearLastRoute();
+  manageSelectedAttractions.removeAllAttractions();
+
+  mapManager.resetMap();
+
+  // map.setView([44.435423, 26.102287], 19);
+
+  // allMarkers = [];
+  // markerLabels = [];
+
+  // routeLayer = null;
+  lastSearchResponse = null;
+  lastQuery = null;
+  hasSuggestions = false;
+}
+
+// Wait for authentication before initializing the app
 initializeApp();
-const backendOrigin = authService.backendOrigin;
+// const geocodingRequestManager = new ServiceUri(authService.backendOrigin);
+// const backendOrigin = authService.backendOrigin;
 
 // const backendOrigin = await resolveBackendOrigin();
 // const appExplanationParagraph = document.getElementById("app-explanation");
@@ -62,22 +87,29 @@ const backendOrigin = authService.backendOrigin;
 // document.getElementById("used-for-hiding-message-panel").hidden = false;
 // appExplanationParagraph.hidden = false;
 // Initialize Map at University of Bucharest
-var map = L.map("map", {
-  zoomControl: false // Disable default zoom control
-}).setView([44.435423, 26.102287], 19);
+// var map = L.map("map", {
+//   zoomControl: false // Disable default zoom control
+// }).setView([44.435423, 26.102287], 19);
 
-// Add zoom control to the right side
-L.control.zoom({
-  position: "bottomright" // Options: "topleft", "topright", "bottomleft", "bottomright"
-}).addTo(map);
+// // Add zoom control to the right side
+// L.control.zoom({
+//   position: "bottomright" // Options: "topleft", "topright", "bottomleft", "bottomright"
+// }).addTo(map);
 
-// Add OpenStreetMap Tiles
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution: "© OpenStreetMap contributors"
-}).addTo(map);
+// // Add OpenStreetMap Tiles
+// L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+//   attribution: "© OpenStreetMap contributors"
+// }).addTo(map);
 
-let allMarkers = [];
-let markerLabels = [];
+const mapManager = new MapManager("map", [44.435423, 26.102287], 19, "bottomright");
+
+// let allMarkers = [];
+// let markerLabels = [];
+// let routeLayer = null;
+
+let lastSearchResponse = null;
+let lastQuery = null;
+let hasSuggestions = false;
 
 // Add a marker - Removing the Unviersity Marker for now
 // let userMarker = L.marker([44.435423, 26.102287]).addTo(map)
@@ -131,62 +163,6 @@ const routingButton = document.getElementById("routing-button");
 //     };
 // }
 
-async function fetchSuggestions(q) {
-  const res = await fetch(buildGeocodeApiUri(q));
-  if (!res.ok) throw new Error(`Server error: ${res.status}`);
-
-  // Expect JSON: [{ display_name, lat, lon }, …]
-  return res.json();
-}
-
-const buildGeocodeApiUri = (place, readFromCache = true, writeToCache = true) => {
-  const params = new URLSearchParams({
-    place: place,
-    readFromCache: readFromCache.toString(),
-    writeToCache: writeToCache.toString()
-  });
-  return `${backendOrigin}/api/geocode?${params}`;
-};
-
-/**
- * @example Response {
- * code: "Ok",
- * waypoints: [
- * {distance: 145.02258276918147,
-      name: "",
-      location: [
-        26.150666,
-        44.437105,
-      ],
-      waypoint_index: 0,
-      trips_index: 0,
- * },...],
- * trips: [
- * { geometry: {...},
- *   legs : []
- * }, ...]
- * }
- * @param {String} coordinates - a coordinates list string in format long,lat;
- * @returns 
- */
-async function fetchTSPRouting(coordinates) {
-  const res = await fetch(buildOptimizeApiUri(coordinates));
-  if (!res.ok) throw new Error(`Server error: ${res.status} - ${res.statusText}`);
-  
-  const data = await res.json();
-  if (data.code != "Ok") {
-    throw new Error(`API returned error code: ${res.status} - ${data.code}`);
-  }
-  return data;
-}
-
-const buildOptimizeApiUri = (coordinatesList) => {
-  const params = new URLSearchParams({
-    coordinatesList: coordinatesList
-  });
-  return `${backendOrigin}/api/optimize?${params}`;
-};
-
 function clearSuggestions() {
   suggestionList.innerHTML = "";
   suggestionList.hidden    = true;
@@ -195,17 +171,13 @@ function clearSuggestions() {
   hasSuggestions = false;
 }
 
-let lastSearchResponse;
-let lastQuery;
-let hasSuggestions = false;
-
 // Main search function
 async function performSearch() {
   lastQuery = searchInput.value.trim();
   if (!lastQuery) return manageAppExplanationParagraph.showNoQueryFoundErrorMessage();
 
   try {
-    lastSearchResponse = await fetchSuggestions(lastQuery);
+    lastSearchResponse = await geocodingRequestManager.fetchSuggestions(lastQuery);
     const items = lastSearchResponse.options;
     if (!items.length) return manageAppExplanationParagraph.showNoSuggestionsFoundErrorMessage(lastQuery);
 
@@ -233,37 +205,23 @@ async function performSearch() {
 }
 
 // Update your addRouteNumbers function
-function addRouteNumbers(waypoints) {
-  const selectedAttractions = manageSelectedAttractions.attractions;
-  waypoints.forEach((waypoint, index) => {
-    const order = waypoint.waypoint_index + 1;
-    const marker = allMarkers[index];
-    const labelMarker = markerLabels[index];
-    
-    if (marker && labelMarker) {
-      const attractionNameFromBackendResponse = marker.getPopup().getContent().replace(/<[^>]*>/g, "");
-      const attractionNameFromQuery = selectedAttractions[index].name;
-      
-      // Update popup with route order
-      marker.setPopupContent(`<strong>${order}. ${attractionNameFromQuery}</strong>`);
-      
-      // Update permanent label with route order
-      labelMarker.setIcon(L.divIcon({
-        className: "marker-label route-label",
-        html: `<div class="label-content route-order">${order}. ${attractionNameFromQuery}</div>`,
-        iconSize: [150, 25],
-        iconAnchor: [75, -10]
-      }));
-    }
-  });
-}
+// function addRouteNumbers(waypoints) {
+//   waypoints.forEach((waypoint, index) => {
+//     mapManager.updateMarkersWithRoutingOrder(manageSelectedAttractions.attractions, waypoint, index);
+//   });
+//   mapManager._displayRoute()
+// }
+
+
 
 routingButton.addEventListener("click", async () => {
   if (!manageSelectedAttractions.enoughAttractionsToRoute) return manageAppExplanationParagraph.showNotEnoughAttractionsSelectedErrorMessage();
-  const mapBoxOptimizeResponse = await fetchTSPRouting(manageSelectedAttractions.coordinatesString);
+  mapManager.clearLastRoute();
+  const mapBoxOptimizeResponse = await geocodingRequestManager.fetchTSPRouting(manageSelectedAttractions.coordinatesString);
   manageAppExplanationParagraph.showDefaultAppSuccessMessage();
-  addRouteNumbers(mapBoxOptimizeResponse.waypoints);
-  L.geoJSON(mapBoxOptimizeResponse.trips[0].geometry, { style: { color: "blue", weight: 5 } }).addTo(map);
+  mapManager.showRouteWithNumberedMarkers(manageSelectedAttractions.attractions, mapBoxOptimizeResponse.waypoints, mapBoxOptimizeResponse.trips[0].geometry);
+  // addRouteNumbers(mapBoxOptimizeResponse.waypoints);
+  // routeLayer = L.geoJSON(mapBoxOptimizeResponse.trips[0].geometry, { style: { color: "blue", weight: 5 } }).addTo(map);
 })
 
 // Replaced the button and input events with the form submit event
@@ -271,6 +229,17 @@ searchAttractionForm.addEventListener("submit", (e) => {
   e.preventDefault();
   performSearch();
 });
+
+document.addEventListener(EVENTS.USER_LOCATION_FOUND, (e) => {
+  manageSelectedAttractions.addAttractionToContainer(e.detail);
+  console.log('User location added to attractions:', detail);
+});
+
+document.addEventListener(EVENTS.USER_LOCATION_ERROR, (e) => {
+  console.error('Failed to get user location:', e.detail.error);
+  manageAppExplanationParagraph.showLocationNotFoundFirstWaypointBecomesStartingPoint();
+});
+
 
 // Button click event
 // searchButton.addEventListener("click", (e) => {
@@ -336,38 +305,6 @@ suggestionList.addEventListener("click", (e) => {
     };
     manageSelectedAttractions.addAttractionToContainer(selectedAttraction);
 
-    const newMarker = L.marker([lat, lon])
-        .addTo(map)
-        .bindPopup(`<strong>${name}</strong>`)
-        // .openPopup();
-
-    // Create permanent label
-    const labelMarker = L.marker([lat, lon], {
-      icon: L.divIcon({
-          className: "marker-label",
-          html: `<div class="label-content">${lastQuery || name}</div>`,
-          iconSize: [150, 25],
-          iconAnchor: [75, -10] // Position above the marker
-      }),
-      interactive: false // Don't interfere with map interactions
-    }).addTo(map);
-
-    allMarkers.push(newMarker);
-    markerLabels.push(labelMarker);
-    fitAllMarkers();
+    mapManager.addNewlySelectedAttractionMarkers([lat, lon], lastQuery, name);
   }
 });
-
-// Function to fit all markers in view
-function fitAllMarkers() {
-  if (allMarkers.length === 0) return;
-  
-  // Create a bounds object
-  const group = new L.featureGroup(allMarkers);
-  
-  // Fit the map to show all markers
-  map.fitBounds(group.getBounds(), {
-    padding: [20, 20] // Add 20px padding around the bounds
-  });
-
-}

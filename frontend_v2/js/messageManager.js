@@ -4,6 +4,7 @@ export default class MessageManager {
    */
   constructor(containerElement) {
     this.container = containerElement;
+    this._backendNotAvailable = false;
   }
 
   /**
@@ -48,6 +49,7 @@ export default class MessageManager {
    * @description Used when there is no backend available for the application.
    */
   showBackendNotAvailableMessage() {
+    this._backendNotAvailable = true;
     this.container.textContent = "Currently the application functionality can not be used. Please try again later.";
     this.container.style.color = "red";
     this.container.style.fontWeight = "bold";
@@ -58,6 +60,13 @@ export default class MessageManager {
    */
   showNotEnoughAttractionsSelectedErrorMessage() {
     this.container.textContent = "Currently there are fewer than two attractions selected so you can not request the routing. Please add some more attractions.";
+    this.container.style.color = "red";
+    this.container.style.fontWeight = "bold";
+  }
+
+  showLocationNotFoundFirstWaypointBecomesStartingPoint() {
+    if (this._backendNotAvailable) return;
+    this.container.textContent = "Your location has not been found. Please take into consideration that the first location you search and select will be considered your starting point.";
     this.container.style.color = "red";
     this.container.style.fontWeight = "bold";
   }

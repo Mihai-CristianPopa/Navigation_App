@@ -45,6 +45,10 @@ export default class AttractionManager {
     return outputEntry;
   }
 
+  removeAllAttractions() {
+    this.container.innerHTML = "";
+  }
+
   /**
    * @description Used to get the coordinates list for the MapBox API Optimize request
    * @returns {String} which contains the list of coordinates of the attractions in lon,lat; format
