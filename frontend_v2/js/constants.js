@@ -5,7 +5,9 @@ export const EVENTS = {
 
   BACKEND_ORIGIN_FETCHED: "backendOriginFetched",
 
-  REMOVE_ATTRACTIONS: "removeAttractions"
+  REMOVE_ATTRACTIONS: "removeAttractions",
+
+  STARTING_POINT_SET: "startingPointSet"
 };
 
 // export const CURRENT_LOCATION = "Current Location";

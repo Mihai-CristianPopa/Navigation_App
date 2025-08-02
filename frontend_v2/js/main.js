@@ -91,18 +91,24 @@ async function performSearch() {
 
     manageAppExplanationParagraph.showDefaultAppSuccessMessage();
 
+    // DocumentFragment optimizes the DOM interaction when running append repeatedly 
+    const frag = document.createDocumentFragment();
+
     items.forEach(({ display_name, lat, lon, place_id }) => {
       const li = document.createElement("li");
       li.textContent = display_name;
       li.dataset.lat = lat;
       li.dataset.lon = lon;
       li.dataset.id = place_id;
-      suggestionList.append(li);
+      frag.append(li);
     });
+
     const li = document.createElement("li");
     li.textContent = "None of the above...";
     li.dataset.id = "-1";
-    suggestionList.append(li);
+    frag.append(li);
+
+    suggestionList.append(frag);
     suggestionList.hidden = false;
     searchInput.setAttribute("aria-expanded", "true");
     hasSuggestions = true;
@@ -130,13 +136,14 @@ function processSelectedSuggestion(event) {
 
     const selectedAttraction = {
         id: li.dataset.id,
-        name: lastQuery || name,
+        name: lastQuery,
+        description: name,
         lat: lat,
         lon: lon
     };
     manageSelectedAttractions.addAttractionToContainer(selectedAttraction);
 
-    mapManager.addNewlySelectedAttractionMarkers([lat, lon], lastQuery, name);
+    mapManager.addNewlySelectedAttractionMarkers(li.dataset.id, [lat, lon], lastQuery, name);
   }
 }
 
@@ -166,7 +173,7 @@ document.getElementById("routing-button").addEventListener("click", async () => 
   mapManager.clearLastRoute();
   const mapBoxOptimizeResponse = await geocodingRequestManager.fetchTSPRouting(manageSelectedAttractions.coordinatesString);
   manageAppExplanationParagraph.showDefaultAppSuccessMessage();
-  mapManager.showRouteWithNumberedMarkers(manageSelectedAttractions.attractions, mapBoxOptimizeResponse.waypoints, mapBoxOptimizeResponse.trips[0].geometry);
+  mapManager.showRouteWithNumberedMarkers(mapBoxOptimizeResponse.waypoints, mapBoxOptimizeResponse.trips[0].geometry);
 });
 
 document.getElementById("clear-route-button").addEventListener("click", () => mapManager.resetMap());

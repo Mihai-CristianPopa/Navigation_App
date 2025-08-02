@@ -46,6 +46,11 @@ export default class MapManager {
       document.dispatchEvent(locationErrorEvent);
     });
 
+    document.addEventListener(EVENTS.STARTING_POINT_SET, (e) => {
+      const attractionId = e.detail.dataset.id;
+      this._moveMarkerFirst(attractionId);
+    });
+
   };
 
   _initMap(mapContainerId) {
@@ -72,7 +77,7 @@ export default class MapManager {
     if (this._popupMarkers.length === 0) return;
     
     // Create a bounds object
-    const group = new L.featureGroup(this._popupMarkers);
+    const group = new L.featureGroup(this._popupMarkers.map(markerObject => markerObject.markerReference));
     
     // Fit the map to show all markers
     this._map.fitBounds(group.getBounds(), {
@@ -83,33 +88,35 @@ export default class MapManager {
   /**
    * Adds a marker with popup and a marker with permanent label and it zooms out to fit all
    * the markers on the screen.
+   * @param {string} id - the unique identifier of the attractions same as the one maintained for the list item
    * @param {array} coordinates - [lat, lon] pairs where lat and lon are numbers
-   * @param {string} permanentText - the user query
-   * @param {string} popupContent - the full address returned by the api of the selected attraction
+   * @param {string} searchQuery - the user' search query
+   * @param {string} fullAttractionName - the full address returned by the api of the selected attraction
    */
-  addNewlySelectedAttractionMarkers(coordinates, permanentText, popupContent) {
-    this._addPopupMarker(coordinates, popupContent);
-    this._addPermanentLabelMarker(coordinates, permanentText);
+  addNewlySelectedAttractionMarkers(id, coordinates, searchQuery, fullAttractionName) {
+    this._addPopupMarker(id, coordinates, searchQuery, fullAttractionName);
+    this._addPermanentLabelMarker(id, coordinates, searchQuery, fullAttractionName);
     this._fitAllMarkers();
   };
 
   /**
    * Updates the popup and the permanent labels with the routing order.
-   * @param {array} selectedAttractions - the array of selected attractions
    * @param {Object} waypoint - waypoint object from the mapbox optimize api
    * @param {number} index - waypoint of the index
    */
-  _updateMarkersWithRoutingOrder(selectedAttractions, waypoint, index) {
+  _updateMarkersWithRoutingOrder(waypoint, index) {
     const order = waypoint.waypoint_index + 1;
-    const marker = this._popupMarkers[index];
-    const labelMarker = this._permanentLabelMarkers[index];
+    const markerObject = this._popupMarkers[index];
+    const labelMarkerObject = this._permanentLabelMarkers[index];
     
-    if (marker && labelMarker) {
-      const attractionNameFromBackendResponse = marker.getPopup().getContent().replace(/<[^>]*>/g, "");
-      const attractionNameFromQuery = selectedAttractions[index].name;
+    if (markerObject && labelMarkerObject) {
+      const marker = markerObject.markerReference;
+      const labelMarker = labelMarkerObject.markerReference;
+      const attractionNameFromQuery = markerObject.searchQuery;
+      const fullAttractionName = markerObject.fullAttractionName;
       
       // Update popup with route order
-      marker.setPopupContent(`<strong>${order}. ${attractionNameFromQuery}</strong>`);
+      marker.setPopupContent(`<strong>${order}. ${fullAttractionName}</strong>`);
       
       // Update permanent label with route order
       labelMarker.setIcon(L.divIcon({
@@ -123,13 +130,12 @@ export default class MapManager {
 
   /**
    * 
-   * @param {array} selectedAttractions - the array of selected attractions 
    * @param {array} mapboxWaypoints - the array of waypoints from the mapbox optimize api
    * @param {Object} mapboxGeoJson - the geoJson element from the trip, outputed by the mapbox optimize api
    */
-  showRouteWithNumberedMarkers(selectedAttractions, mapboxWaypoints, mapboxGeoJson) {
+  showRouteWithNumberedMarkers(mapboxWaypoints, mapboxGeoJson) {
     mapboxWaypoints.forEach((waypoint, index) => {
-      this._updateMarkersWithRoutingOrder(selectedAttractions, waypoint, index);
+      this._updateMarkersWithRoutingOrder(waypoint, index);
     });
     this._displayRoute(mapboxGeoJson);
   }
@@ -142,6 +148,16 @@ export default class MapManager {
     this._map.locate({ setView: true, maxZoom: this._baseZoom });
   }
 
+  _moveElementFirstInArrayBasedOnIndex(array, index){
+    array.unshift(array.splice(index, 1)[0]);
+  }
+
+  _moveMarkerFirst(attractionId) {
+    const indexOfMarkerToMove = this._popupMarkers.findIndex(marker => marker.id === attractionId);
+    this._moveElementFirstInArrayBasedOnIndex(this._popupMarkers, indexOfMarkerToMove);
+    this._moveElementFirstInArrayBasedOnIndex(this._permanentLabelMarkers, indexOfMarkerToMove);
+  }
+
   clearLastRoute() {
     if (this._routeLayer) {
       this._map.removeLayer(this._routeLayer);
@@ -151,6 +167,7 @@ export default class MapManager {
 
   _addCurrentLocationToMapAndTriggerAttractionAdditionEvent() {
     this.addNewlySelectedAttractionMarkers(
+        this._locationId,
         this._baseCoordinates,
         CURRENT_LOCATION.name,
         CURRENT_LOCATION.description(this._locationRadius)
@@ -159,6 +176,7 @@ export default class MapManager {
         detail: {
           id: this._locationId,
           name: CURRENT_LOCATION.name,
+          description: CURRENT_LOCATION.description(this._locationRadius),
           lat: this._baseCoordinates[0],
           lon: this._baseCoordinates[1],
         }
@@ -190,29 +208,41 @@ export default class MapManager {
     this._map.setView(this._baseCoordinates, this._baseZoom);
   }
 
-  _addPopupMarker(coordinates, popupContent) {
-    const newMarker = L.marker(coordinates).addTo(this._map).bindPopup(`<strong>${popupContent}</strong>`);
-    this._popupMarkers.push(newMarker);
+  _addPopupMarker(id, coordinates, searchQuery, fullAttractionName) {
+    const newMarker = L.marker(coordinates, {
+      title: fullAttractionName
+    }).addTo(this._map).bindPopup(`<strong>${fullAttractionName}</strong>`);
+    this._storeMarker(this._popupMarkers, id, newMarker, searchQuery, fullAttractionName);
   };
 
   _removeMarkersFromMap(markersArray) {
     for (const marker of markersArray) {
-      this._map.removeLayer(marker);
+      this._map.removeLayer(marker.markerReference);
     }
   }
 
-  _addPermanentLabelMarker(coordinates, permanentText) {
+  _storeMarker(array, id, markerReference, searchQuery, fullAttractionName) {
+    // Object shorthand - property names match variable names
+    array.push({
+      id,
+      markerReference,
+      searchQuery,
+      fullAttractionName
+    });
+  }
+
+  _addPermanentLabelMarker(id, coordinates, searchQuery, fullAttractionName) {
     const newMarker = L.marker(coordinates, {
       icon: L.divIcon({
           className: "marker-label",
-          html: `<div class="label-content">${permanentText}</div>`,
+          html: `<div class="label-content">${searchQuery}</div>`,
           iconSize: [150, 25],
           iconAnchor: [75, -10] // Position above the marker
       }),
       interactive: false // Don't interfere with map interactions
     }).addTo(this._map);
 
-    this._permanentLabelMarkers.push(newMarker);
+    this._storeMarker(this._permanentLabelMarkers, id, newMarker, searchQuery, fullAttractionName);
   };
 
 };
