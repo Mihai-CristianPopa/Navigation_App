@@ -19,7 +19,7 @@ export default class ServiceUri {
   };
 
   _validateBackendAvailable() {
-    if (!this._isReady) {
+    if (!this._backendAvailable) {
       throw new Error('ServiceUri not ready - backend origin not available');
     }
   };
