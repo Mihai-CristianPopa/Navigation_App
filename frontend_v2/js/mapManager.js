@@ -73,6 +73,7 @@ export default class MapManager {
 
         // User confirmed, clear the route
         this.clearLastRoute();
+        this._clearRoutingOrder();
         console.log('Route cleared due to attraction removal');
       }
       const listItem = e.detail;
@@ -136,6 +137,50 @@ export default class MapManager {
     this._fitAllMarkers();
   };
 
+  _clearRoutingOrder() {
+    for(let i = 0; i <= this._popupMarkers.length - 1; i++) {
+      const currentPopupMarker = this._popupMarkers[i];
+      const currentLabelMarker = this._permanentLabelMarkers[i];
+      this._updatePopupMarkerContent(currentPopupMarker, currentPopupMarker.fullAttractionName);
+      this._updatePermanentLabelMarketIcon(currentLabelMarker, false, currentLabelMarker.searchQuery);
+    }
+  }
+
+  _getMarkerReference(marker) {
+    const markerReference = marker?.markerReference;
+    if (markerReference) return markerReference;
+    return marker;
+  }
+
+  _updatePopupMarkerContent(marker, text) {
+    marker = this._getMarkerReference(marker);
+    marker.setPopupContent(this._getPopupMarkerContent(text));
+  }
+
+  _updatePermanentLabelMarketIcon(marker, withOrder, text) {
+    marker = this._getMarkerReference(marker);
+    marker.setIcon(this._getPermanentLabelMarkerIcon(withOrder, text));
+  }
+
+  _getPopupMarkerContent(popupContent) {
+    return `<strong>${popupContent}</strong>`;
+  }
+
+  _getPermanentLabelMarkerIcon(addRouteLabel, text) {
+    let className = "marker-label";
+    let htmlClass = "label-content";
+    if (addRouteLabel) {
+      className += " route-label";
+      htmlClass += " route-order";
+    }
+    return L.divIcon({
+      className,
+      html: `<div class=${htmlClass}>${text}</div>`,
+      iconSize: [150, 25],
+      iconAnchor: [75, -10]
+    });
+  }
+  
   /**
    * Updates the popup and the permanent labels with the routing order.
    * @param {Object} waypoint - waypoint object from the mapbox optimize api
@@ -153,15 +198,13 @@ export default class MapManager {
       const fullAttractionName = markerObject.fullAttractionName;
 
       // Update popup with route order
-      marker.setPopupContent(`<strong>${order}. ${fullAttractionName}</strong>`);
+      // marker.setPopupContent(this._getPopupMarkerContent(`${order}. ${fullAttractionName}`));
+
+      this._updatePopupMarkerContent(marker, `${order}. ${fullAttractionName}`);
       
       // Update permanent label with route order
-      labelMarker.setIcon(L.divIcon({
-        className: "marker-label route-label",
-        html: `<div class="label-content route-order">${order}. ${attractionNameFromQuery}</div>`,
-        iconSize: [150, 25],
-        iconAnchor: [75, -10]
-      }));
+      // labelMarker.setIcon(this._getPermanentLabelMarkerIcon(true, `${order}. ${attractionNameFromQuery}`));
+      this._updatePermanentLabelMarketIcon(labelMarker, true, `${order}. ${attractionNameFromQuery}`);
     }
   }
 
@@ -259,7 +302,7 @@ export default class MapManager {
   _addPopupMarker(id, coordinates, searchQuery, fullAttractionName) {
     const newMarker = L.marker(coordinates, {
       title: fullAttractionName
-    }).addTo(this._map).bindPopup(`<strong>${fullAttractionName}</strong>`);
+    }).addTo(this._map).bindPopup(this._getPopupMarkerContent(fullAttractionName));
     this._storeMarker(this._popupMarkers, id, newMarker, searchQuery, fullAttractionName);
   };
 
@@ -285,12 +328,7 @@ export default class MapManager {
 
   _addPermanentLabelMarker(id, coordinates, searchQuery, fullAttractionName) {
     const newMarker = L.marker(coordinates, {
-      icon: L.divIcon({
-          className: "marker-label",
-          html: `<div class="label-content">${searchQuery}</div>`,
-          iconSize: [150, 25],
-          iconAnchor: [75, -10] // Position above the marker
-      }),
+      icon: this._getPermanentLabelMarkerIcon(false, searchQuery),
       interactive: false // Don't interfere with map interactions
     }).addTo(this._map);
 
