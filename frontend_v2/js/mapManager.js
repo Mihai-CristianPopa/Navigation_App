@@ -51,6 +51,19 @@ export default class MapManager {
       this._moveMarkerFirst(attractionId);
     });
 
+    document.addEventListener(EVENTS.REMOVE_SINGLE_ATTRACTION, (e) => {
+      // There is already a routing displayed
+      if (this._routeLayer) {
+        // Show popup do you want to continue with deleting this attraction?
+        // If yes, the previous route will be removed from the map.
+      }
+      this._removeMarkersAssociatedToAttraction(e.detail.dataset.id);
+      // console.log("Should remove markers");
+      // remove the markers of the attraction
+      // maybe also the markers positions should pe updated, if the user
+      // decides to delete one of the attractions after the routing was done
+    });
+
   };
 
   _initMap(mapContainerId) {
@@ -114,7 +127,7 @@ export default class MapManager {
       const labelMarker = labelMarkerObject.markerReference;
       const attractionNameFromQuery = markerObject.searchQuery;
       const fullAttractionName = markerObject.fullAttractionName;
-      
+
       // Update popup with route order
       marker.setPopupContent(`<strong>${order}. ${fullAttractionName}</strong>`);
       
@@ -146,6 +159,17 @@ export default class MapManager {
 
   _locateUser() {
     this._map.locate({ setView: true, maxZoom: this._baseZoom });
+  }
+
+  _removeElementInArrayBasedOnIndex(array, index) {
+    const removedMarker = array.splice(index, 1)[0];
+    this._removeMarkerFromMap(removedMarker);
+  }
+
+  _removeMarkersAssociatedToAttraction(attractionId) {
+    const indexOfMarkerToRemove = this._popupMarkers.findIndex(marker => marker.id === attractionId);
+    this._removeElementInArrayBasedOnIndex(this._popupMarkers, indexOfMarkerToRemove);
+    this._removeElementInArrayBasedOnIndex(this._permanentLabelMarkers, indexOfMarkerToRemove);
   }
 
   _moveElementFirstInArrayBasedOnIndex(array, index){
@@ -215,9 +239,13 @@ export default class MapManager {
     this._storeMarker(this._popupMarkers, id, newMarker, searchQuery, fullAttractionName);
   };
 
+  _removeMarkerFromMap(marker) {
+    this._map.removeLayer(marker.markerReference);
+  }
+
   _removeMarkersFromMap(markersArray) {
     for (const marker of markersArray) {
-      this._map.removeLayer(marker.markerReference);
+      this._removeMarkerFromMap(marker);
     }
   }
 

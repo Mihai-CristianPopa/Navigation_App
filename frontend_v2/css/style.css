@@ -251,7 +251,13 @@ form.search-attraction button:active {
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem;
-  gap: 0.75rem;
+  gap: 0.5rem;
+}
+
+.attraction-buttons {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
 }
 
 .attraction-text {
@@ -273,6 +279,10 @@ form.search-attraction button:active {
   transition: all 0.2s ease;
   white-space: nowrap;
   flex-shrink: 0;
+  height: 28px;
+  display: flex; 
+  align-items: center;
+  justify-content: center;
 }
 
 .set-start-button:hover {
@@ -324,6 +334,41 @@ form.search-attraction button:active {
   outline-offset: 2px;
 }
 
+.remove-attraction-button {
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-attraction-button:hover {
+  background: #d32f2f;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.remove-attraction-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.remove-attraction-button:focus {
+  outline: 2px solid #f44336;
+  outline-offset: 2px;
+}
+
 #attractions-items li:hover {
   background: #f8f9fa;
   border-color: #2196F3;
@@ -357,6 +402,18 @@ form.search-attraction button:active {
   .set-start-button {
     padding: 0.3rem 0.5rem;
     font-size: 0.7rem;
+    height: 24px;
+  }
+
+  .remove-attraction-button {
+    padding: 0.3rem 0.4rem;
+    font-size: 0.65rem;
+    min-width: 24px;
+    height: 24px;
+  }
+  
+  .attraction-buttons {
+    gap: 0.3rem;
   }
   
   .attraction-text {
@@ -370,11 +427,16 @@ form.search-attraction button:active {
     align-items: stretch;
     gap: 0.5rem;
   }
-  
-  .set-start-button {
+
+  .attraction-buttons {
     align-self: flex-end;
     width: auto;
-    min-width: 100px;
+  }
+  
+  .set-start-button,
+  .remove-attraction-button  {
+    min-width: 80px;
+    height: 32px;
   }
 }
 

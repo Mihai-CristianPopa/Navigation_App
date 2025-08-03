@@ -7,6 +7,8 @@ export const EVENTS = {
 
   REMOVE_ATTRACTIONS: "removeAttractions",
 
+  REMOVE_SINGLE_ATTRACTION: "removeSingleAttraction",
+
   STARTING_POINT_SET: "startingPointSet"
 };
 

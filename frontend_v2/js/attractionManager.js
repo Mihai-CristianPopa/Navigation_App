@@ -9,17 +9,23 @@ export default class AttractionManager {
   }
 
   _setupEventListeners() {
-  this.container.addEventListener('click', (e) => {
-    if (e.target.classList.contains('set-start-button')) {
-      e.stopPropagation();
-      const listItem = e.target.closest('li');
-      this._moveAttractionAsFirst(listItem);
-      this._updateButtonStates();
-      document.dispatchEvent(new CustomEvent(EVENTS.STARTING_POINT_SET, {
-        detail: listItem
-      }));
-    }
-  });
+    this.container.addEventListener('click', (e) => {
+      if (e.target.classList.contains('set-start-button')) {
+        e.stopPropagation();
+        const listItem = e.target.closest('li');
+        this._moveAttractionAsFirst(listItem);
+        this._updateButtonStates();
+      }
+    });
+
+    this.container.addEventListener("click", (e) => {
+      if (e.target.classList.contains("remove-attraction-button")) {
+        e.stopPropagation();
+        const listItem = e.target.closest('li');
+        this._removeAttraction(listItem);
+        this._updateButtonStates();
+      }
+    });
   }
 
   _updateButtonStates() {
@@ -55,6 +61,33 @@ export default class AttractionManager {
     }));
   }
 
+  _createAttractionContent(name) {
+    const attractionContent = document.createElement("div");
+    attractionContent.className = "attraction-content";
+
+    const attractionText = document.createElement("span");
+    attractionText.className = "attraction-text";
+    attractionText.textContent = name;
+
+    const attractionButtons = document.createElement("div");
+    attractionButtons.className = "attraction-buttons";
+
+    const setStartButton = document.createElement("button");
+    setStartButton.className = "set-start-button";
+    setStartButton.textContent = "Set as Start";
+    setStartButton.type = "button";
+
+    const removeAttractionButton = document.createElement("button");
+    removeAttractionButton.className = "remove-attraction-button";
+    removeAttractionButton.textContent = "x";
+    removeAttractionButton.type = "button";
+
+    attractionButtons.append(setStartButton, removeAttractionButton)
+    attractionContent.append(attractionText, attractionButtons);
+
+    return attractionContent;
+  }
+
   /**
    * 
    * @param {Object} attractionData - Should contain at least the id, name, lat and lon
@@ -77,20 +110,7 @@ export default class AttractionManager {
     outputEntry.dataset.name = name;
     outputEntry.dataset.description = description;
 
-    const attractionContent = document.createElement("div");
-    attractionContent.className = "attraction-content";
-
-    const attractionText = document.createElement("span");
-    attractionText.className = "attraction-text";
-    attractionText.textContent = name;
-
-    const setStartButton = document.createElement("button");
-    setStartButton.className = "set-start-button";
-    setStartButton.textContent = "Set as Start";
-    setStartButton.type = "button";
-
-    attractionContent.append(attractionText, setStartButton);
-    outputEntry.append(attractionContent);
+    outputEntry.append(this._createAttractionContent(name));
     this.container.append(outputEntry);
 
     this._updateButtonStates();
@@ -99,7 +119,19 @@ export default class AttractionManager {
   }
 
   _moveAttractionAsFirst(attractionListItem) {
+    document.dispatchEvent(new CustomEvent(EVENTS.STARTING_POINT_SET, {
+          detail: attractionListItem
+    }));
     this.container.prepend(attractionListItem);
+  }
+
+  _removeAttraction(attractionListItem) {
+    document.dispatchEvent(new CustomEvent(EVENTS.REMOVE_SINGLE_ATTRACTION, {
+      detail: attractionListItem
+    }));
+    if (this.container.removeChild(attractionListItem)) {
+      console.log("Removal of attraction was successful");
+    } else console.error("Removal of attraction failed");
   }
 
   removeAllAttractions() {
