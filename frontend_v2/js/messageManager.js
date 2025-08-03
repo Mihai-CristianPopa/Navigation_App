@@ -1,82 +1,76 @@
+import { MESSAGES } from "./constants.js";
+
 export default class MessageManager {
   /**
-   * @param containerElement - This is developed for the app-explanation <p>
+   * @param generalInformationParagraph - This is developed for the app-explanation <p>
+   * @param locationInformationParagraph
    */
-  constructor(containerElement) {
-    this.container = containerElement;
-    this._backendNotAvailable = false;
+  constructor(generalInformationParagraph, locationInformationParagraph) {
+    this.generalInformationParagraph = generalInformationParagraph;
+    this.locationInformationParagraph = locationInformationParagraph;
+  }
+
+  _showSuccessMessage(message, container = this.generalInformationParagraph) {
+    container.textContent = message
+    container.style.color = "#000000";
+    container.style.fontWeight = "normal";
+  }
+
+  _showErrorMessage(message, container = this.generalInformationParagraph) {
+    container.textContent = message;
+    container.style.color = "red";
+    container.style.fontWeight = "bold"; 
   }
 
   /**
    * @description Used when user makes a search attraction request without inputting any query.
    */
   showNoQueryFoundErrorMessage() {
-    this.container.textContent = "There was no attraction inputted for the previous request";
-    this.container.style.color = "red";
-    this.container.style.fontWeight = "bold";    
+    this._showErrorMessage(MESSAGES.ERROR.NO_QUERY_FOUND);
   }
 
   /**
    * @description Used when no suggestions are found for the query which was used.
-   * @param {String} query - Attraction used for the request
+   * @param {String} q - Attraction used for the request
    */
-  showNoSuggestionsFoundErrorMessage(query) {
-    this.container.textContent = `No suggestions found for ${query}.`;
-    this.container.style.color = "red";
-    this.container.style.fontWeight = "bold";    
+  showNoSuggestionsFoundErrorMessage(q) {
+    this._showErrorMessage(MESSAGES.ERROR.NO_SUGGESTIONS(q));  
   }
 
   /**
    * @description Used when an error occured with the request for the last query.
-   * @param {String} query - Attraction used for the request
+   * @param {String} q - Attraction used for the request
    */
-  showRequestErrorMessage(query) {
-    this.container.textContent = `There was an internal server error when processing: ${query}.`;
-    this.container.style.color = "red";
-    this.container.style.fontWeight = "bold";    
+  showRequestErrorMessage(q) {
+    this._showErrorMessage(MESSAGES.ERROR.REQUEST_ATTRACTION_INTERNAL_SERVER_ERROR(q));
   }
 
   /**
    * @description Always show this message to describe the use of the application, if everything works as expected.
    */
   showDefaultAppSuccessMessage() {
-    this.container.textContent = "This application is used for routing you to the attractions you want to see.";
-    this.container.style.color = "#000000";
-    this.container.style.fontWeight = "normal";
+    this._showSuccessMessage(MESSAGES.SUCCESS.DEFAULT_APP_EXPLANATION);
   }
 
   /**
    * @description Used when there is no backend available for the application.
    */
   showBackendNotAvailableMessage() {
-    this._backendNotAvailable = true;
-    this.container.textContent = "Currently the application functionality can not be used. Please try again later.";
-    this.container.style.color = "red";
-    this.container.style.fontWeight = "bold";
+    this._showErrorMessage(MESSAGES.ERROR.BACKEND_NOT_AVAILABLE);
   }
 
   /**
    * @description Used when calling the routing approach and there are fewer than two attractions selected.
    */
   showNotEnoughAttractionsSelectedErrorMessage() {
-    this.container.textContent = "Currently there are fewer than two attractions selected so you can not request the routing. Please add some more attractions.";
-    this.container.style.color = "red";
-    this.container.style.fontWeight = "bold";
+    this._showErrorMessage(MESSAGES.ERROR.LESS_THAN_TWO_ATTRACTIONS);
   }
 
   showLocationNotFoundFirstWaypointBecomesStartingPoint() {
-    if (this._backendNotAvailable) return;
-    this.container.textContent = "Your location has not been found. Please take into consideration that the first location you search and select will be considered your starting point.";
-    this.container.style.color = "red";
-    this.container.style.fontWeight = "bold";
+    this._showErrorMessage(MESSAGES.ERROR.LOCATION_NOT_FETCHED, this.locationInformationParagraph);
   }
 
-  /**
-   * 
-   * @param {*} shouldBeVisible - true to make the container visible, false to hide it
-   */
-  makeVisible(shouldBeVisible) {
-    this.container.hidden = !(shouldBeVisible === true);
+  showLocationIsStartingPoint() {
+    this._showSuccessMessage(MESSAGES.SUCCESS.LOCATION_IS_STARTING_POINT, this.locationInformationParagraph);
   }
-
 }

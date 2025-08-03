@@ -8,7 +8,7 @@ import MapManager from "./mapManager.js";
 import { EVENTS } from "./constants.js";
 
 const manageSelectedAttractions = new AttractionManager(document.getElementById("attractions-items"));
-const manageAppExplanationParagraph = new MessageManager(document.getElementById("app-explanation"));
+const manageAppExplanationParagraph = new MessageManager(document.getElementById("app-explanation"), document.getElementById("location-status"));
 const authUI = new AuthUI(manageAppExplanationParagraph);
 const geocodingRequestManager = new ServiceUri();
 const mapManager = new MapManager("map", [44.435423, 26.102287], 19, "bottomright");
@@ -188,6 +188,7 @@ document.addEventListener(EVENTS.REMOVE_ATTRACTIONS, () => manageSelectedAttract
 
 document.addEventListener(EVENTS.USER_LOCATION_FOUND, (e) => {
   manageSelectedAttractions.addAttractionToContainer(e.detail);
+  manageAppExplanationParagraph.showLocationIsStartingPoint();
   console.log('User location added to attractions:', e.detail);
 });
 
