@@ -9,6 +9,11 @@ export const EVENTS = {
 
   REMOVE_SINGLE_ATTRACTION: "removeSingleAttraction",
 
+  REMOVE_SINGLE_ATTRACTION_REQUESTED: "removeSingleAttractionRequested",
+
+  ATTRACTION_REMOVAL_CONFIRMED: "removeSingleAttractionConfirmed",
+
+
   STARTING_POINT_SET: "startingPointSet"
 };
 

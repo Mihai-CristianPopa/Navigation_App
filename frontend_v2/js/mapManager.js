@@ -1,4 +1,5 @@
 import { EVENTS, CURRENT_LOCATION } from "./constants.js";
+import DialogManager from "./dialogManager.js";
 
 export default class MapManager {
   /**
@@ -16,6 +17,8 @@ export default class MapManager {
     this._permanentLabelMarkers = [];
     this._routeLayer = null;
     this._userLocationFetched = false;
+
+    this._dialogManager = new DialogManager();
 
     this._map = this._initMap(mapContainerId);
     this._setupEventListeners();
@@ -51,19 +54,40 @@ export default class MapManager {
       this._moveMarkerFirst(attractionId);
     });
 
-    document.addEventListener(EVENTS.REMOVE_SINGLE_ATTRACTION, (e) => {
+    document.addEventListener(EVENTS.REMOVE_SINGLE_ATTRACTION_REQUESTED, async (e) => {
       // There is already a routing displayed
       if (this._routeLayer) {
         // Show popup do you want to continue with deleting this attraction?
         // If yes, the previous route will be removed from the map.
+        const shouldContinue = await this._dialogManager.showConfirmation({
+          title: 'Remove Attraction',
+          message: 'Removing this attraction will clear the current route. Do you want to continue?',
+          continueText: 'Remove',
+          cancelText: 'Keep'
+        });
+
+        if (!shouldContinue) {
+          console.log('User cancelled attraction removal');
+          return; // User cancelled, don't remove attraction
+        }
+
+        // User confirmed, clear the route
+        this.clearLastRoute();
+        console.log('Route cleared due to attraction removal');
       }
-      this._removeMarkersAssociatedToAttraction(e.detail.dataset.id);
+      const listItem = e.detail;
+      const attractionId = listItem.dataset.id;
+      this._removeMarkersAssociatedToAttraction(attractionId);
+      console.log('Attraction markers removed from map');
+
+      document.dispatchEvent(new CustomEvent(EVENTS.ATTRACTION_REMOVAL_CONFIRMED, {
+        detail: listItem
+      }));
+    });
       // console.log("Should remove markers");
       // remove the markers of the attraction
       // maybe also the markers positions should pe updated, if the user
       // decides to delete one of the attractions after the routing was done
-    });
-
   };
 
   _initMap(mapContainerId) {

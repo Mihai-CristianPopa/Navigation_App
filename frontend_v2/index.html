@@ -76,6 +76,26 @@
                 </div>
             </div>
         </div>
+
+        <!-- Popup in case of removal of attraction after routing is done -->
+        <div id="used-for-hiding-confirmation-dialog-overlay" hidden>
+            <div id="confirmation-dialog-overlay" class="dialog-overlay">
+                <div id="confirmation-dialog" class="confirmation-dialog">
+                    <div class="dialog-header">
+                        <h4 id="dialog-title">Remove Attraction</h4>
+                    </div>
+                    <div class="dialog-body">
+                        <p id="dialog-message">
+                            Removing this attraction will clear the current route. Do you want to continue?
+                        </p>
+                    </div>
+                    <div class="dialog-actions">
+                        <button id="dialog-cancel" class="dialog-button secondary">Cancel</button>
+                        <button id="dialog-continue" class="dialog-button primary">Continue</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <!-- Floating message panel at the top -->
         <div id="used-for-hiding-message-panel" hidden>
@@ -115,7 +135,7 @@
                     <ul id="attractions-items"></ul>
                     <div id="routing-buttons-container"></div>
                         <button id="routing-button">Get routing</button>
-                        <button id="clear-route-button">Clear Route</button>
+                        <button id="clear-route-button">Reset map</button>
                     </div>
                 </div>
             </div>

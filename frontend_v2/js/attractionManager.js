@@ -22,9 +22,13 @@ export default class AttractionManager {
       if (e.target.classList.contains("remove-attraction-button")) {
         e.stopPropagation();
         const listItem = e.target.closest('li');
-        this._removeAttraction(listItem);
-        this._updateButtonStates();
+        this._requestAttractionRemoval(listItem);
       }
+    });
+
+    document.addEventListener(EVENTS.ATTRACTION_REMOVAL_CONFIRMED, (e) => {
+      const attractionElement = e.detail;
+      this._performAttractionRemoval(attractionElement);
     });
   }
 
@@ -125,12 +129,16 @@ export default class AttractionManager {
     this.container.prepend(attractionListItem);
   }
 
-  _removeAttraction(attractionListItem) {
-    document.dispatchEvent(new CustomEvent(EVENTS.REMOVE_SINGLE_ATTRACTION, {
+  _requestAttractionRemoval(attractionListItem) {
+    document.dispatchEvent(new CustomEvent(EVENTS.REMOVE_SINGLE_ATTRACTION_REQUESTED, {
       detail: attractionListItem
     }));
+  }
+
+  _performAttractionRemoval(attractionListItem) {
     if (this.container.removeChild(attractionListItem)) {
       console.log("Removal of attraction was successful");
+      this._updateButtonStates();
     } else console.error("Removal of attraction failed");
   }
 
