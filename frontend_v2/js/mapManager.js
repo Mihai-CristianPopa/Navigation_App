@@ -192,19 +192,9 @@ export default class MapManager {
     const labelMarkerObject = this._permanentLabelMarkers[index];
     
     if (markerObject && labelMarkerObject) {
-      const marker = markerObject.markerReference;
-      const labelMarker = labelMarkerObject.markerReference;
-      const attractionNameFromQuery = markerObject.searchQuery;
-      const fullAttractionName = markerObject.fullAttractionName;
-
-      // Update popup with route order
-      // marker.setPopupContent(this._getPopupMarkerContent(`${order}. ${fullAttractionName}`));
-
-      this._updatePopupMarkerContent(marker, `${order}. ${fullAttractionName}`);
+      this._updatePopupMarkerContent(markerObject, `${order}. ${markerObject.fullAttractionName}`);
       
-      // Update permanent label with route order
-      // labelMarker.setIcon(this._getPermanentLabelMarkerIcon(true, `${order}. ${attractionNameFromQuery}`));
-      this._updatePermanentLabelMarketIcon(labelMarker, true, `${order}. ${attractionNameFromQuery}`);
+      this._updatePermanentLabelMarketIcon(labelMarkerObject, true, `${order}. ${markerObject.searchQuery}`);
     }
   }
 
