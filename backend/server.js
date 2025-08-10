@@ -6,8 +6,6 @@ import dbClient from "./db/mongoClient.js";
 import geocodeRoutes from "./routes/geocodeRoutes.js";
 import authenticationRoutes from "./routes/authenticationRoutes.js";
 import { config } from "./configs/config.js";
-// import { createClearingIndex } from "./services/apiTrackingService.js";
-
 
 const app = express();
 const port = config.port;
@@ -15,7 +13,7 @@ const frontendOrigin = config.frontendOrigin;
 
 // Middleware
 app.use(cors({
-  origin: [frontendOrigin, "http://127.0.0.1:5500"],
+  origin: [frontendOrigin, "http://127.0.0.1:5500", "https://mihai-cristianpopa.github.io"],
   credentials: true
 }));
 app.use(express.json());
@@ -82,7 +80,7 @@ async function startServer() {
   
   app.listen(port, () => {
     logger.info(`Geocoding server running on http://localhost:${port}`);
-    logger.info(`Accepting CORS from ${frontendOrigin} and http://127.0.0.1:5500`);
+    logger.info(`Accepting CORS from ${frontendOrigin}, http://127.0.0.1:5500 and https://mihai-cristianpopa.github.io`);
     logger.info(`Database status: ${app.locals.dbIsDown ? 'DOWN' : 'UP'}`);
   });
 }

@@ -180,34 +180,44 @@ export default class MapManager {
       iconAnchor: [75, -10]
     });
   }
-  
+
+  /**
+   * Adds route order to the markers list and attaches the geometry to the map.
+   * @param {Object} ownOptimizationResponse - object containing the finalIndicesArray
+   */
+  showRouteWithNumberedMarkersV2(ownOptimizationResponse) {
+    ownOptimizationResponse.finalIndicesArray.forEach((finalIndex, initialIndex) => {
+      this._updateMarkersWithRoutingOrder(initialIndex, finalIndex);
+    });
+    this._displayRoute(ownOptimizationResponse.geometry);
+  }
+
+  /**
+   * @param {array} mapboxWaypoints - the array of waypoints from the mapbox optimize api
+   * @param {Object} mapboxGeoJson - the geoJson element from the trip, outputed by the mapbox optimize api
+   */
+  showRouteWithNumberedMarkers(mapboxWaypoints, mapboxGeoJson) {
+    mapboxWaypoints.forEach((waypoint, index) => {
+      this._updateMarkersWithRoutingOrder(waypoint.waypoint_index, index);
+    });
+    this._displayRoute(mapboxGeoJson);
+  }
+
   /**
    * Updates the popup and the permanent labels with the routing order.
-   * @param {Object} waypoint - waypoint object from the mapbox optimize api
-   * @param {number} index - waypoint of the index
+   * @param {Object} initialIndex - index of the attraction as per the user input
+   * @param {number} finalIndex - index of the attraction after the route is optimized
    */
-  _updateMarkersWithRoutingOrder(waypoint, index) {
-    const order = waypoint.waypoint_index + 1;
-    const markerObject = this._popupMarkers[index];
-    const labelMarkerObject = this._permanentLabelMarkers[index];
+  _updateMarkersWithRoutingOrder(initialIndex, finalIndex) {
+    const order = finalIndex + 1;
+    const markerObject = this._popupMarkers[initialIndex];
+    const labelMarkerObject = this._permanentLabelMarkers[initialIndex];
     
     if (markerObject && labelMarkerObject) {
       this._updatePopupMarkerContent(markerObject, `${order}. ${markerObject.fullAttractionName}`);
       
       this._updatePermanentLabelMarketIcon(labelMarkerObject, true, `${order}. ${markerObject.searchQuery}`);
     }
-  }
-
-  /**
-   * 
-   * @param {array} mapboxWaypoints - the array of waypoints from the mapbox optimize api
-   * @param {Object} mapboxGeoJson - the geoJson element from the trip, outputed by the mapbox optimize api
-   */
-  showRouteWithNumberedMarkers(mapboxWaypoints, mapboxGeoJson) {
-    mapboxWaypoints.forEach((waypoint, index) => {
-      this._updateMarkersWithRoutingOrder(waypoint, index);
-    });
-    this._displayRoute(mapboxGeoJson);
   }
 
   _displayRoute(geojson) {

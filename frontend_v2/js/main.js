@@ -171,9 +171,15 @@ function showCollapsedSuggestions() {
 document.getElementById("routing-button").addEventListener("click", async () => {
   if (!manageSelectedAttractions.enoughAttractionsToRoute) return manageAppExplanationParagraph.showNotEnoughAttractionsSelectedErrorMessage();
   mapManager.clearLastRoute();
-  const mapBoxOptimizeResponse = await geocodingRequestManager.fetchTSPRouting(manageSelectedAttractions.coordinatesString);
-  manageAppExplanationParagraph.showDefaultAppSuccessMessage();
-  mapManager.showRouteWithNumberedMarkers(mapBoxOptimizeResponse.waypoints, mapBoxOptimizeResponse.trips[0].geometry);
+  try {
+    // const mapBoxOptimizeResponse = await geocodingRequestManager.fetchTSPRouting(manageSelectedAttractions.coordinatesString);
+    const ownOptimizationResponse = await geocodingRequestManager.fetchOwnTspRouting(manageSelectedAttractions.waypointIds, manageSelectedAttractions.coordinatesString);
+    manageAppExplanationParagraph.showDefaultAppSuccessMessage();
+    // mapManager.showRouteWithNumberedMarkers(mapBoxOptimizeResponse.waypoints, mapBoxOptimizeResponse.trips[0].geometry);
+    mapManager.showRouteWithNumberedMarkersV2(ownOptimizationResponse);
+  } catch (error) {
+    manageAppExplanationParagraph.showErrorWhileGettingRoute();
+  }
 });
 
 document.getElementById("clear-route-button").addEventListener("click", () => mapManager.resetMap());

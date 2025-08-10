@@ -31,6 +31,14 @@ export default class ServiceUri {
     return `${this._backendOrigin}/api/optimize?${params}`;
   };
 
+  _buildOwnOptimizeApiUri = (waypointIds, coordinatesList) => {
+    const params = new URLSearchParams({
+      waypointIds,
+      coordinatesList: coordinatesList
+    });
+    return `${this._backendOrigin}/api/v2/optimize?${params}`;
+  };
+
   _buildGeocodeApiUri = (place, readFromCache = true, writeToCache = true) => {
     const params = new URLSearchParams({
       place: place,
@@ -76,6 +84,14 @@ export default class ServiceUri {
     if (data.code != "Ok") {
       throw new Error(`API returned error code: ${res.status} - ${data.code}`);
     }
+    return data;
+  }
+
+  async fetchOwnTspRouting(waypointIds, coordinates) {
+    this._validateBackendAvailable();
+    const res = await this._fetchWithCredentials(this._buildOwnOptimizeApiUri(waypointIds, coordinates));
+    if (!res.ok) throw new Error(`Server error: ${res.status} - ${res.statusText}`);
+    const data = await res.json();
     return data;
   }
 

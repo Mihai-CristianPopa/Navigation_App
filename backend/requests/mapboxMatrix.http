@@ -1,0 +1,28 @@
+@baseUrl = http://localhost:3000
+@waypointIds = Current Location;Arcul de Triumf;Parcul Cismigiu;Arena Nationala;Parcul Tineretului
+@coordinates = 26.0276224,44.4399616;26.078127050916656,44.46719015;26.090581105217595,44.437289199999995;26.15247577172729,44.4372494;26.10962446654144,44.406407599999994
+# Successful request
+# @name login
+POST {{baseUrl}}/authentication/login HTTP/1.1
+content-type: application/json
+
+{
+    "email": "user5@gmail.com",
+    "password": "somepass"
+}
+
+### 2. Extract session ID from login response cookies
+@fullCookie = {{login.response.headers.set-cookie}}
+####
+GET {{baseUrl}}/api/v2/optimize?waypointIds={{waypointIds}}&coordinatesList={{coordinates}} HTTP/1.1
+Cookie: {{fullCookie}}
+
+### 3. Failure due to missing query parameter
+@fullCookie = {{login.response.headers.set-cookie}}
+####
+GET {{baseUrl}}/api/v2/optimize?waypointIds={{waypointIds}} HTTP/1.1
+Cookie: {{fullCookie}}
+
+### 4. Use session for logout
+POST {{baseUrl}}/authentication/logout HTTP/1.1
+Cookie: {{fullCookie}}

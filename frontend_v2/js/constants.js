@@ -30,7 +30,8 @@ export const MESSAGES = {
     REQUEST_ATTRACTION_INTERNAL_SERVER_ERROR: (q) => `There was an internal server error when processing: ${q}.`,
     BACKEND_NOT_AVAILABLE: "Currently the application functionality can not be used. Please try again later.",
     LESS_THAN_TWO_ATTRACTIONS: "Currently there are fewer than two attractions selected so you can not request the routing. Please add some more attractions.",
-    LOCATION_NOT_FETCHED: "Your location has not been found. Please take into consideration that the first location you search and select will be considered your starting point." 
+    LOCATION_NOT_FETCHED: "Your location has not been found. Please take into consideration that the first location you search and select will be considered your starting point.",
+    GET_ROUTE_ERROR: "There was an error when getting the route. Please try again later."
   },
   SUCCESS: {
     DEFAULT_APP_EXPLANATION: "This application is used for routing you to the attractions you want to see.",

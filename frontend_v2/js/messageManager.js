@@ -66,6 +66,10 @@ export default class MessageManager {
     this._showErrorMessage(MESSAGES.ERROR.LESS_THAN_TWO_ATTRACTIONS);
   }
 
+  showErrorWhileGettingRoute() {
+    this._showErrorMessage(MESSAGES.ERROR.GET_ROUTE_ERROR);
+  }
+
   showLocationNotFoundFirstWaypointBecomesStartingPoint() {
     this._showErrorMessage(MESSAGES.ERROR.LOCATION_NOT_FETCHED, this.locationInformationParagraph);
   }

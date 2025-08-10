@@ -1,0 +1,29 @@
+@baseUrl = http://localhost:3000
+@query = Baia Mare
+@readFromCache = true
+@writeToCache = false
+
+# Successful login
+# @name login
+POST {{baseUrl}}/authentication/login HTTP/1.1
+content-type: application/json
+
+{
+    "email": "user5@gmail.com",
+    "password": "somepass"
+}
+
+###
+@fullCookie = {{login.response.headers.set-cookie}}
+
+### 2. Successful Get suggestions request
+GET {{baseUrl}}/api/geocode?place={{query}}&readFromCache={{readFromCache}}&writeToCache={{writeToCache}}
+Cookie: {{fullCookie}}
+
+### 3. Failed request due to missing parameter
+GET {{baseUrl}}/api/geocode?readFromCache={{readFromCache}}&writeToCache={{writeToCache}}
+Cookie: {{fullCookie}}
+
+### 4. Use session for logout
+POST {{baseUrl}}/authentication/logout HTTP/1.1
+Cookie: {{fullCookie}}

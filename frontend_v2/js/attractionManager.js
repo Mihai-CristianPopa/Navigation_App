@@ -156,6 +156,12 @@ export default class AttractionManager {
       .join(";");
   }
 
+  get waypointIds() {
+    return this.attractions
+      .map(attraction => attraction.name)
+      .join(";");
+  }
+
   /**
    * @description Used to get the number of selected suggestions.
    */

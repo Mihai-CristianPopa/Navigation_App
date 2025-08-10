@@ -7,5 +7,6 @@ export const config = {
   mongoPassword: process.env.MONGO_PASSWORD,
   port: process.env.PORT || 3000,
   frontendOrigin: process.env.FRONTEND_ORIGIN || "http://localhost:5173",
-  mapboxApiKey: process.env.MAPBOX_ACCESS_TOKEN
+  mapboxApiKey: process.env.MAPBOX_ACCESS_TOKEN,
+  rapidApiKey: process.env.RAPID_API_KEY
 };

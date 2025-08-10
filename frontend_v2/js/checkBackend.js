@@ -9,7 +9,7 @@
  */
 export default async function resolveBackendOrigin() {
     const localOrigin = "http://localhost:3000";
-    const remoteOrigin = ""; //TODO to be set after backend is deployed
+    const remoteOrigin = "https://backend-navigation-app.onrender.com";
     const origins = [localOrigin, remoteOrigin];
     const healthEndpoint = "health";
     for (const origin of origins) {
