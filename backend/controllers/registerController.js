@@ -26,7 +26,7 @@ export const registerController = async (req, res) => {
   try {
     // Check if there is an existing user
     if (await getUserByEmail(email)){
-      err = ERROR_OBJECTS.USER_ALREADY_EXISTS;
+      err = ERROR_OBJECTS.USER_ALREADY_EXISTS(email);
       logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
       return res.status(err.statusCode).json(err);
     };

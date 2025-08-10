@@ -3,7 +3,6 @@ import { registerController } from "../controllers/registerController.js";
 import { deleteUserController } from "../controllers/deleteUserController.js";
 import { loginController } from "../controllers/loginController.js";
 import { logoutController } from "../controllers/logoutController.js";
-import { isUserloggedInController } from "../controllers/isUserLoggedInController.js";
 import { requireAuthentication } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -30,6 +29,7 @@ router.post("/login", loginController);
 
 router.post("/register", registerController);
 
+// TODO this should be accessible only to the admin role
 router.delete("/delete-user", deleteUserController);
 
 router.get("/me", requireAuthentication, (req, res) => {

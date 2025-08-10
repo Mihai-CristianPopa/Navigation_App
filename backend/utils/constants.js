@@ -2,7 +2,7 @@ const errorMessageMissingBodyElement = " failed due to the body of the request m
 
 const loginErrorMessageMissingBodyElement = "Login" + errorMessageMissingBodyElement;
 
-export const registrationErrorMessageUserWithEmailExists = "Registration failed because there already exists an user with this email address.";
+export const registrationErrorMessageUserWithEmailExists = (email) => `Registration failed because there already exists an user with email address ${email}.`;
 
 export const loginErrorMessageMissingEmailAddressFromBody = loginErrorMessageMissingBodyElement + "email address.";
 
@@ -17,8 +17,6 @@ export const loginErrorMessageWrongPassword = (email) => {
 };
 
 export const loginErrorMessageWrongCredentialsFrontendFacing = "Login failed due to invalid email or password";
-
-export const userDeletionErrorMessageMissingEmailAddressQueryParam = "User deletion failed due to email not existing as a query parameter.";
 
 export const userDeletionSuccessMessage = (email) => {
   return `Deletion of the user with the email address ${email} was successful.`;
@@ -81,9 +79,11 @@ export const ERROR_OBJECTS = {
           details: `Missing field: ${missingField}`
         }
     },
-    USER_ALREADY_EXISTS: {
-      statusCode: 400,
-      message: registrationErrorMessageUserWithEmailExists
+    USER_ALREADY_EXISTS: (email) => {
+      return {
+        statusCode: 400,
+        message: registrationErrorMessageUserWithEmailExists(email)
+      };
     },
     MISSING_API_KEY: (apiKeyUsage) => {
         return {
@@ -119,7 +119,14 @@ export const ERROR_OBJECTS = {
     FRONTEND_INTERNAL_SERVER_ERROR: {
       statusCode: 500,
       message: "Internal server error. Please try again later.",
+    },
+    DELETION_FAILED: (email) => {
+      return {
+      statusCode: 500,
+      message: userDeletionErrorMessageRequestFailed(email)
+    };
     }
+    
 }
 
 export const EXTERNAL_APIS = {

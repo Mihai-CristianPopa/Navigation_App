@@ -3,7 +3,8 @@ import logger from "../logger.js";
 import logObj from "../loggerHelper.js";
 import { getSessionId, clearSessionCookie, isSessionExpired } from "../utils/sessionCookieHandling.js";
 import { deleteLoginSession, getLoginSession } from "../services/sessionService.js";
-
+// TODO this can be removed at some point
+/**@deprecated */
 export const isUserloggedInController = async (req, res) => {
   const startTime = Date.now();
 
