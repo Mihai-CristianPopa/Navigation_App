@@ -1,5 +1,8 @@
 import dbClient from "../db/mongoClient.js";
 import logger from "../logger.js";
+import { FAILED_TO_INCREMENT_REQUEST_COUNT, FAILED_TO_GET_REQUEST_COUNT } from "../utils/constants.js";
+
+/** Used for counting the requests made by the external APIs to count against the daily limits. */
 export async function incrementRequestCount(userId, email, apiProvider, endpoint, version) {
     try {
         const db = dbClient.db("authentication");
@@ -15,12 +18,12 @@ export async function incrementRequestCount(userId, email, apiProvider, endpoint
             date: new Date().toISOString().split('T')[0]
         };
         await collection.insertOne(requestLog);
-        logger.info(`API request logged: ${apiProvider}`);
     } catch (error) {
-        logger.error("Failed to log API request", { error: error.message });
+        logger.error(FAILED_TO_INCREMENT_REQUEST_COUNT(email, apiProvider, endpoint, version), error);
     }
 }
 
+/** Used for checking whether the daily limits for the external APIs have beeen reached. */
 export async function getDailyApiRequestCount(apiProvider, endpoint, version, userId=null, date = null) {
     try {
         const db = dbClient.db("authentication");
@@ -41,7 +44,7 @@ export async function getDailyApiRequestCount(apiProvider, endpoint, version, us
     
         return count;
     } catch (error) {
-        logger.error("Failed to get daily API request count", { error: error.message });
+        logger.error(FAILED_TO_GET_REQUEST_COUNT(apiProvider, endpoint, version), error);
         return 0;
     }
 }

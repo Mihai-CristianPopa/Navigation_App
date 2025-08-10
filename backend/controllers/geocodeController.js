@@ -45,6 +45,8 @@ export const geocodeController = async (req, res) => {
   }
 
   try {
+    // Step -1: If the attraction is cached then read it, no need for extra requests, this will also
+    // not get counted towards the limit.
     const cachedAttraction = readFromCache ? await getAttractionOptions(place) : null;
     
     if (cachedAttraction) {
@@ -52,9 +54,12 @@ export const geocodeController = async (req, res) => {
       res.set("X-Cache", "HIT");
       return res.status(200).json(cachedAttraction);
     } else {
+      // Step 0: Check whether external APIs can still be made for LocationIq
+      const limitReached = await limitsReachedForExternalApi(req, res, startTime);
 
-      limitsReachedForExternalApi(req, res, startTime);
+      if (limitReached === true) return;
 
+      // Step 1: Make the Geocoding Location Iq request
       const response = await makeLocationIqGeocodeRequest(apiKey, place, req);
 
       const attractionOptionsToBeAdded = {
@@ -64,6 +69,7 @@ export const geocodeController = async (req, res) => {
         date: new Date().toISOString().split('T')[0]
       };
       
+      // Step 2: Cache the result
       handleAttractionAdditionBasedOnCachingParameter(req, startTime, writeToCache, attractionOptionsToBeAdded);
       
       res.set("X-Cache", "MISS");
@@ -97,19 +103,23 @@ async function makeLocationIqGeocodeRequest(apiKey, place, req) {
 
 async function limitsReachedForExternalApi(req, res, startTime) {
   let err;
+  let failed = false;
   const [perUserCount, totalCount] = await Promise.all([getDailyApiRequestCount(LOCATION_IQ, GEOCODE, V1, req.user.id, null), getDailyApiRequestCount(LOCATION_IQ, GEOCODE, V1)]);
   if (perUserCount > LIMIT.LOCATION_IQ_PER_USER_DAILY_REQUEST_LIMIT) {
     err = ERROR_OBJECTS.EXTERNAL_API_USER_LIMIT(LOCATION_IQ, GEOCODE, V1);
     logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
-    return res.status(err.statusCode).json(ERROR_OBJECTS.FRONTEND_API_USER_LIMIT("geocoding"));    
+    res.status(err.statusCode).json(ERROR_OBJECTS.FRONTEND_API_USER_LIMIT("geocoding"));
+    failed = true;    
   }
   if (totalCount > LIMIT.LOCATION_IQ_TOTAL_DAILY_REQUEST) {
     err = ERROR_OBJECTS.EXTERNAL_API_TOTAL_LIMIT(LOCATION_IQ, GEOCODE, V1);
     logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
-    return res.status(err.statusCode).json(ERROR_OBJECTS.FRONTEND_API_TOTAL_LIMIT("geocoding"));
+    res.status(err.statusCode).json(ERROR_OBJECTS.FRONTEND_API_TOTAL_LIMIT("geocoding"));
+    failed = true;
   }
 
   infoLog(req, startTime, INFO_MESSAGE.DAILY_EXTERNAL_API_REQUEST_COUNT(totalCount, LOCATION_IQ, GEOCODE, V1));
+  return failed;
 }
 
 async function handleAttractionAdditionBasedOnCachingParameter(req, startTime, writeToCache, attractionOptionsToBeAdded) {

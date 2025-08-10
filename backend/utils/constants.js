@@ -46,8 +46,12 @@ export const LIMIT = {
   
   // Suppose we have 10 users
   LOCATION_IQ_PER_USER_DAILY_REQUEST_LIMIT: 500,
-  MAPBOX_PER_USER_DAILY_REQUEST_LIMIT: 3300
+  MAPBOX_PER_USER_DAILY_REQUEST_LIMIT: 330
 }
+
+export const FAILED_TO_INCREMENT_REQUEST_COUNT = (email, apiProvider, endpoint, version) => `Failed to log API request for user ${email} ${apiProvider}/${endpoint}/${version}`;
+
+export const FAILED_TO_GET_REQUEST_COUNT = (apiProvider, endpoint, version) => `Failed to get daily API request count for ${apiProvider}/${endpoint}/${version}`;
 
 export const LOG_MESSAGE = {
   SUCCESS: {
