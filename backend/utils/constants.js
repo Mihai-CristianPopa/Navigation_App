@@ -1,12 +1,6 @@
 const errorMessageMissingBodyElement = " failed due to the body of the request missing the ";
 
-const registrationErrorMessageMissingBodyElement = "Registration" + errorMessageMissingBodyElement;
-
 const loginErrorMessageMissingBodyElement = "Login" + errorMessageMissingBodyElement;
-
-export const registrationErrorMessageMissingEmailAddressFromBody = registrationErrorMessageMissingBodyElement + "email address.";
-
-export const registrationErrorMessageMissingPasswordFromBody = registrationErrorMessageMissingBodyElement + "password.";
 
 export const registrationErrorMessageUserWithEmailExists = "Registration failed because there already exists an user with this email address.";
 
@@ -75,7 +69,8 @@ export const INFO_MESSAGE = {
   },
   ATTRACTION_CACHED: (dbAttractionId) => `Attraction with id ${dbAttractionId} has been added to the attractions collection from the LocationIQ API`,
   ATTRACTION_CACHING_FAILED: "Attraction information cachinh to the database failed",
-  ATTRACTION_NOT_CACHED_ON_PURPOSE: "Attraction information has not been cached to the database since writeToCache has been set as false", 
+  ATTRACTION_NOT_CACHED_ON_PURPOSE: "Attraction information has not been cached to the database since writeToCache has been set as false",
+  USER_REGISTERED: (email) => `User ${email} registered successfully`
 }
 
 export const ERROR_OBJECTS = {
@@ -85,6 +80,10 @@ export const ERROR_OBJECTS = {
           message: "Missing required inputs. Ensure that all necessary fields are included or calculated correctly.",
           details: `Missing field: ${missingField}`
         }
+    },
+    USER_ALREADY_EXISTS: {
+      statusCode: 400,
+      message: registrationErrorMessageUserWithEmailExists
     },
     MISSING_API_KEY: (apiKeyUsage) => {
         return {

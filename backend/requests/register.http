@@ -2,8 +2,7 @@
 DELETE http://localhost:3000/authentication/delete-user?email=michaelScott%40dundermifflin.com HTTP/1.1
 content-type: application/json
 
-
-# Then do the registration
+### Then do the registration
 POST http://localhost:3000/authentication/register HTTP/1.1
 content-type: application/json
 

@@ -78,29 +78,37 @@ class AuthService {
     }
   }
 
+  /** If registration works fine we will return an object containing ok: true, and a message.
+   * In case of failure ok will not be sent.
+   */
   async register(email, password) {
     if (!this._backendOrigin) {
       throw new Error('Backend not available');
     }
+    try {
+      const response = await fetch(`${this._backendOrigin}/authentication/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password })
+      });
 
-    const response = await fetch(`${this._backendOrigin}/authentication/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email, password })
-    });
+      const data = await response.json();
 
-    const data = await response.json();
+      const responseObject = {
+        message: data.message
+      }
 
-    if (response.ok && data.success) {
-      return { success: true };
-    } else {
-      return { 
-        success: false, 
-        message: data.message || 'Registration failed' 
-      };
+      if (response.ok) {
+        responseObject.ok = true;
+      }
+      return responseObject;
+    } catch (error) {
+      return {
+        message: "Something went wrong with the registration request. Please try again later."
+      }
     }
   }
 

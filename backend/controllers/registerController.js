@@ -1,41 +1,36 @@
 import bcrypt from "bcrypt";
 import logger from "../logger.js";
-import logObj from "../loggerHelper.js";
+import {errorObj, infoLog} from "../loggerHelper.js";
 import { registerUser, getUserByEmail } from "../services/userService.js";
-// import { createLoginSession } from "../services/sessionService.js";
-import { registrationErrorMessageMissingEmailAddressFromBody, registrationErrorMessageMissingPasswordFromBody, registrationErrorMessageUserWithEmailExists } from "../utils/constants.js";
+import { ERROR_OBJECTS, INFO_MESSAGE } from "../utils/constants.js";
+
+const METHOD_FAILURE_MESSAGE = "registerController failed.";
 
 export const registerController = async (req, res) => {
   const startTime = Date.now();
   const { email, password } = req.body;
+  let err;
 
   if (!email) {
-    logger.error(registrationErrorMessageMissingEmailAddressFromBody, logObj(400, req, startTime));
-    return res.status(400).json({
-      success: false,
-      message: registrationErrorMessageMissingEmailAddressFromBody
-    });
+    err = ERROR_OBJECTS.BAD_REQUEST("email");
+    logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+    return res.status(err.statusCode).json(err);
   }
 
   if (!password) {
-    logger.error(registrationErrorMessageMissingPasswordFromBody, logObj(400, req, startTime));
-    return res.status(400).json({
-      success: false,
-      message: registrationErrorMessageMissingPasswordFromBody
-    });
+    err = ERROR_OBJECTS.BAD_REQUEST("password");
+    logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+    return res.status(err.statusCode).json(err);
   }
   
   try {
     // Check if there is an existing user
     if (await getUserByEmail(email)){
-      logger.error(registrationErrorMessageUserWithEmailExists, logObj(404, req, startTime));
-      return res.status(404).json({
-        success: false,
-        message: registrationErrorMessageUserWithEmailExists
-      });
+      err = ERROR_OBJECTS.USER_ALREADY_EXISTS;
+      logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+      return res.status(err.statusCode).json(err);
     };
 
-    logger.info(`Registration attempt started for user with email ${email}`, logObj(null, req, startTime));
     // Hash the password
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -47,34 +42,13 @@ export const registerController = async (req, res) => {
       date: new Date().toISOString().split('T')[0]
     });
 
-    // Removing the session logic for now from the registration.
-    // const sessionData = await createLoginSession({
-    //   userId: newUser.insertedId.toString(),
-    //   email: newUser.email_address,
-    //   login_time: new Date().toISOString()
-    // });
-
-    // res.cookie('sid', sessionData.insertedId.toString(), {
-    //   // domain:   '.example.com',  // valid on any *.example.com
-    //   // path:     '/',             // sent for every request to api.example.com
-    //   httpOnly: true,            // JS on the page can’t read document.cookie
-    //   // secure:   true,            // only over HTTPS
-    //   sameSite: 'none',          // allow cross-site cookie sending
-    //   maxAge:   24 * 60 * 60 * 1000  // expires in 24 hours
-    // });
-
-    logger.info(`User registered successfully: ${email}`, logObj(null, req, startTime));
+    infoLog(req, startTime, INFO_MESSAGE.USER_REGISTERED(email));
     res.status(201).json({
-      success: true,
-      message: 'User registered successfully'
+      message: INFO_MESSAGE.USER_REGISTERED(email)
     });
   } catch(error) {
-    logger.error(`Registration failed for ${email}: ${error.message}`, logObj(500, req, startTime));
-
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error during registration'
-    });
+    logger.error(`${METHOD_FAILURE_MESSAGE} for ${email}`, errorObj(req, startTime, error));
+    res.status(500).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);
   }
   
 };

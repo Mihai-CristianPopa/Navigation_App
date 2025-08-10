@@ -148,16 +148,8 @@ class AuthUI {
     try {
       const result = await authService.register(email, password);
       
-      if (result.success) {
+      if (result.ok) {
         this.showLoginFormAfterRegistration(email);
-        // Auto-login after successful registration
-        // const loginResult = await authService.login(email, password);
-        // if (loginResult.success) {
-        //   this.showUserPanel(authService.user);
-        // } else {
-        //   this.showLoginForm();
-        //   this.showError('Registration successful! Please sign in.');
-        // }
       } else {
         this.showError(result.message);
       }

@@ -3,8 +3,8 @@ import logger from "./logger.js";
 const defaultLog = (req, startTime) => {
     const log = {};
     if (req) {
-        log.route = req.originalUrl;
-        log.method = req.method;
+        log.route = req?.originalUrl;
+        log.method = req?.method;
         log.email = req?.user?.email || "";
     }
     if (startTime) {
