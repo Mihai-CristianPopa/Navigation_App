@@ -33,7 +33,7 @@ class AuthService {
 
       const data = await response.json();
 
-      if (response.ok && data.authenticated) {
+      if (response.ok) {
         this._user = data.user;
         this._isAuthenticated = true;
         return true;
@@ -54,28 +54,32 @@ class AuthService {
     if (!this._backendOrigin) {
       throw new Error('Backend not available');
     }
+    try {
+      const response = await fetch(`${this._backendOrigin}/authentication/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password })
+      });
 
-    const response = await fetch(`${this._backendOrigin}/authentication/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email, password })
-    });
-
-    const data = await response.json();
-    // Refresh user data
-    const cookieProperlySet = await this.checkAuthStatus();
-
-    if (response.ok && data.success && cookieProperlySet) {
-      return { success: true };
-    } else {
-      return { 
-        success: false, 
-        message: data.message || 'Login failed' 
-      };
+      const data = await response.json();
+      // Recheck whether all authentication steps went smoothly and update the user data
+      const userAuthenticated = await this.checkAuthStatus();
+      const responseObject = {message: data.message};
+      if (response.ok && userAuthenticated === true) {
+        responseObject.ok = true;
+      }
+      
+      return responseObject;
+    } catch (error) {
+      console.error("Login error: ", error);
+      return {
+        message: "Something went wrong with the registration request. Please try again later."
+      }
     }
+    
   }
 
   /** If registration works fine we will return an object containing ok: true, and a message.
@@ -106,6 +110,7 @@ class AuthService {
       }
       return responseObject;
     } catch (error) {
+      console.error("Register error: ", error);
       return {
         message: "Something went wrong with the registration request. Please try again later."
       }
@@ -123,18 +128,12 @@ class AuthService {
 
       const data = await response.json();
       
-      // Always reset local state, even if server request fails
-      this._user = null;
-      this._isAuthenticated = false;
-      
-      return { success: true };
     } catch (error) {
       console.error('Logout error:', error);
-      // Still reset local state
-      this._user = null;
-      this._isAuthenticated = false;
-      return { success: true };
     }
+    // Always reset local state
+    this._user = null;
+    this._isAuthenticated = false;
   }
 
   get user() {

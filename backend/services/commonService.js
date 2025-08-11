@@ -1,4 +1,5 @@
 import dbClient from "../db/mongoClient.js";
+import logger from "../logger.js";
 // Only needed to be ran once
 /**
  * @description Creates or updates a TTL (Time To Live) index for automatic document expiration
@@ -7,9 +8,10 @@ import dbClient from "../db/mongoClient.js";
  * @param {String} timestampColumn - the name of column on which to base the expiration time
  * @param {number} numberOfSecondsBeforeExpiry - the number of seconds that each object from the collection will be kept
  * @returns A promise which resolves when the index is either created/updated or the operation fails
+ * @throws any error that might come up.
  */
 export async function createClearingIndex(databaseName, collectionName, timestampColumn, numberOfSecondsBeforeExpiry) {
-const db = dbClient.db(databaseName);
+    const db = dbClient.db(databaseName);
     const collection = db.collection(collectionName);
     
     const indexName = `${timestampColumn}_1`; // MongoDB's default naming convention
@@ -25,8 +27,8 @@ const db = dbClient.db(databaseName);
             
             // Check if TTL value needs updating
             if (currentIndex && currentIndex.expireAfterSeconds !== numberOfSecondsBeforeExpiry) {
-                console.log(`Updating TTL index ${indexName} from ${currentIndex.expireAfterSeconds}s to ${numberOfSecondsBeforeExpiry}s`);
-                
+                logger.info(`Updating TTL index ${indexName} from ${currentIndex.expireAfterSeconds}s to ${numberOfSecondsBeforeExpiry}s`)
+
                 // Drop the existing index
                 await collection.dropIndex(indexName);
                 
@@ -39,12 +41,12 @@ const db = dbClient.db(databaseName);
                     }
                 );
             } else {
-                console.log(`TTL index ${indexName} already exists with correct expiration time`);
+                logger.info(`TTL index ${indexName} already exists with correct expiration time.`);
                 return; // Index exists with correct TTL value
             }
         } else {
             // Create new index
-            console.log(`Creating new TTL index ${indexName} with ${numberOfSecondsBeforeExpiry}s expiration`);
+            logger.info(`Creating new TTL index ${indexName} with ${numberOfSecondsBeforeExpiry}s expiration.`);
             return collection.createIndex(
                 { [timestampColumn]: 1 }, 
                 { 
@@ -54,7 +56,7 @@ const db = dbClient.db(databaseName);
             );
         }
     } catch (error) {
-        console.error(`Failed to create/update TTL index ${indexName}:`, error);
+        logger.error(`Failed to create/update TTL index ${indexName}:`, error);
         throw error;
     }
 }

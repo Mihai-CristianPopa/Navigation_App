@@ -113,7 +113,7 @@ class AuthUI {
     try {
       const result = await authService.login(email, password);
       
-      if (result.success) {
+      if (result.ok) {
         this.showUserPanel(authService.user);
         this.showSearchPanelAndMessagePanel();
       } else {
@@ -164,19 +164,16 @@ class AuthUI {
   async handleLogout() {
     try {
       await authService.logout();
-      this.showAuthPanel();
-      this.hideSearchPanelAndMessagePanel();
-      document.body.classList.remove('authenticated');
-      
-      // Clear any app state if needed
-      clearUserState();
-      // this.clearAppState();
+    
     } catch (error) {
       console.error('Logout error:', error);
-      // Still show auth panel even if logout request failed
-      this.showAuthPanel();
-      document.body.classList.remove('authenticated');
     }
+    this.showAuthPanel();
+    this.hideSearchPanelAndMessagePanel();
+    document.body.classList.remove('authenticated');
+      
+    // Clear any app state if needed
+    clearUserState();
   }
 
   clearAppState() {

@@ -22,7 +22,7 @@ const loggerObject = (status, req, startTime, err) => {
         errorMessage = err.message;
         details = err.details;
     }
-    loggerObject.statusCode = status;
+    if (status) loggerObject.statusCode = status; 
     if (req) {
         loggerObject.route = req.originalUrl;
         loggerObject.method = req.method;

@@ -1,8 +1,9 @@
 import { createClearingIndex } from "../services/commonService.js";
+import logger from "../logger.js";
 
 const SESSION_COOKIE_NAME = 'sid';
 
-const sessionExpirationTimeInMiliseconds = 24 * 60 * 60 * 1000;
+export const sessionExpirationTimeInMiliseconds = 24 * 60 * 60 * 1000;
 
 const COOKIE_BASE_OPTIONS = {
   httpOnly: true,
@@ -41,6 +42,11 @@ export const isSessionExpired = (loginTimeISO) => {
   return timeDifference >= sessionExpirationTimeInMiliseconds;
 };
 
-export const createLoginSessionClearingIndex = () => {
-  return createClearingIndex("authentication", "sessions", "login_time", sessionExpirationTimeInMiliseconds);  
+export const createLoginSessionClearingIndex = async () => {
+  try {
+    const loginClearingIndex = await createClearingIndex("authentication", "sessions", "login_time", sessionExpirationTimeInMiliseconds);
+    return loginClearingIndex;
+  } catch(error) {
+    logger.error("createLoginSessionClearingIndex failed.", error);
+  }  
 } 

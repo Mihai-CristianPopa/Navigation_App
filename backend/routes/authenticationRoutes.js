@@ -34,8 +34,7 @@ router.delete("/delete-user", deleteUserController);
 
 router.get("/me", requireAuthentication, (req, res) => {
   return res.status(200).json({
-      success: true,
-      authenticated: true,
+      message: "User authenticated successfully.",
       user: req.user
     });
 });

@@ -1,57 +1,50 @@
 import bcrypt from "bcrypt";
 import logger from "../logger.js";
-import logObj from "../loggerHelper.js";
-import { loginErrorMessageMissingEmailAddressFromBody, loginErrorMessageMissingPasswordFromBody, loginErrorMessageNoUserFoundForTheEmail, loginErrorMessageWrongPassword, loginErrorMessageWrongCredentialsFrontendFacing } from "../utils/constants.js";
+import { errorObj, warnLog, infoLog } from "../loggerHelper.js";
+import { ERROR_OBJECTS, INFO_MESSAGE, loginErrorMessageWrongCredentialsFrontendFacing } from "../utils/constants.js";
 import { getUserByEmail } from "../services/userService.js";
 import { createLoginSession } from "../services/sessionService.js";
-import { setSessionCookie, createLoginSessionClearingIndex } from "../utils/sessionCookieHandling.js";
-import { start } from "repl";
+import { setSessionCookie, createLoginSessionClearingIndex, sessionExpirationTimeInMiliseconds } from "../utils/sessionCookieHandling.js";
 
 export const loginController = async (req, res) => {
   const startTime = Date.now();
   const { email, password } = req.body;
+  const METHOD_FAILURE_MESSAGE = "loginController failed.";
+  function handleLoginError(err, frontendMessage=null) {
+      logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+      if (frontendMessage) err.message = frontendMessage;
+      return res.status(err.statusCode).json(err);
+  }
+
+  /** Needs to be executed only once, or in case something the storing time of the cookies changes. */
+  async function setClearingIndexForSessionCookies() {
+    const sessionClearingIndex =  await createLoginSessionClearingIndex();
+    if (!sessionClearingIndex) {
+      warnLog(req, startTime, "TTL for creating the login sessions failed to be created");
+    }
+  }
 
   if (!email) {
-    logger.error(loginErrorMessageMissingEmailAddressFromBody, logObj(400, req, startTime));
-    return res.status(400).json({
-      success: false,
-      message: loginErrorMessageMissingEmailAddressFromBody
-    });
+    return handleLoginError(ERROR_OBJECTS.BAD_REQUEST("email"));
   }
 
   if (!password) {
-    logger.error(loginErrorMessageMissingPasswordFromBody, logObj(400, req, startTime));
-    return res.status(400).json({
-      success: false,
-      message: loginErrorMessageMissingPasswordFromBody
-    });
+    return handleLoginError(ERROR_OBJECTS.BAD_REQUEST("password"));
   }
 
   try {
-    logger.info(`Login attempt started for user with email ${email}`, logObj(null, req, startTime));
     const existingUser = await getUserByEmail(email);
     if (!existingUser) {
-      logger.error(loginErrorMessageNoUserFoundForTheEmail(email), logObj(401, req, startTime));
-      return res.status(401).json({
-        success: false,
-        message: loginErrorMessageWrongCredentialsFrontendFacing
-      });
+      return handleLoginError(ERROR_OBJECTS.NO_USER_FOUND_WITH_EMAIL(email), loginErrorMessageWrongCredentialsFrontendFacing);
     }
 
     const isSamePassword = bcrypt.compareSync(password, existingUser.password);
     if (!isSamePassword) {
-      logger.error(loginErrorMessageWrongPassword(email), logObj(401, req, startTime));
-      return res.status(401).json({
-        success: false,
-        message: loginErrorMessageWrongCredentialsFrontendFacing
-      });
+      return handleLoginError(ERROR_OBJECTS.WRONG_PASSWORD(email), loginErrorMessageWrongCredentialsFrontendFacing);
     }
     
-    // const sessionExpirationTimeInSeconds = 24 * 60 * 60 * 1000;
-    const sessionClearingIndex =  await createLoginSessionClearingIndex();
-    if (!sessionClearingIndex) {
-      logger.warn("TTL for creating the login sessions failed to be created");
-    }
+    // Only try reseting the clearing index if the time to maintain the cookies in the db changes
+    if (sessionExpirationTimeInMiliseconds  !== 24 * 60 * 60 * 1000) await setClearingIndexForSessionCookies();
     
     const sessionData = await createLoginSession({
       user_id: existingUser._id,
@@ -59,30 +52,18 @@ export const loginController = async (req, res) => {
       login_time: new Date().toISOString()
     });
 
-    logger.info(`Login session with id ${sessionData.insertedId.toString()} has been created for user with email address ${email}`, logObj(null, req, startTime));
+    infoLog(req, startTime, INFO_MESSAGE.LOGIN_SESSION_CREATED(sessionData.insertedId.toString(), email));
 
     setSessionCookie(res, sessionData.insertedId.toString());
-    // res.cookie('sid', sessionData.insertedId.toString(), {
-    //   // domain:   '.example.com',  // valid on any *.example.com
-    //   // path:     '/',             // sent for every request to api.example.com
-    //   httpOnly: true,            // JS on the page can’t read document.cookie
-    //   // secure:   true,            // only over HTTPS
-    //   sameSite: 'none',          // allow cross-site cookie sending
-    //   maxAge:   sessionExpirationTimeInSeconds  // expires in 24 hours
-    // });
 
-    logger.info(`User with email ${email} has been logged in.`, logObj(200, req, startTime));
+    infoLog(req, startTime, INFO_MESSAGE.USER_LOGGED_IN(email));
     return res.status(200).json({
-      success: true,
-      message: `User with email ${email} has been logged in.`
+      message: INFO_MESSAGE.USER_LOGGED_IN(email)
     })
 
   } catch(error) {
-    logger.error(`Login failed for ${email}: ${error.message}`, logObj(500, req, startTime));
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error during login'
-    });
+    logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, error));
+    return res.status(500).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);
   }
   
 

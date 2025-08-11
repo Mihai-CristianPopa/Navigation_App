@@ -1,4 +1,11 @@
+@email = michaelScott@dundermifflin.com
+@password = davidWallaceIsAFool
+@wrongEmail = michaelScott@dundermilin.com
+@wrongPassword = davidWallaceIZAFool
+
+
 # Successful request
+# @name login
 POST http://localhost:3000/authentication/login HTTP/1.1
 content-type: application/json
 
@@ -6,6 +13,9 @@ content-type: application/json
     "email": "michaelScott@dundermifflin.com",
     "password": "davidWallaceIsAFool"
 }
+
+### Extract session ID from login response cookies
+@fullCookie = {{login.response.headers.set-cookie}}
 
 ###
 # Failed request due to missing email address
@@ -24,3 +34,25 @@ content-type: application/json
 {
     "email": "michaelScott@dundermifflin.com"
 }
+
+### Try Logging in with non existing email address
+POST http://localhost:3000/authentication/login HTTP/1.1
+content-type: application/json
+
+{
+    "email": "{{wrongEmail}}",
+    "password": "{{password}}"
+}
+
+### Try Logging in with a wrong password
+POST http://localhost:3000/authentication/login HTTP/1.1
+content-type: application/json
+
+{
+    "email": "{{email}}",
+    "password": "{{wrongPassword}}"
+}
+
+### Make sure to also logout to be able to test again
+POST http://localhost:3000/authentication/logout HTTP/1.1
+Cookie: {{fullCookie}}

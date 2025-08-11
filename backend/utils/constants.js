@@ -8,13 +8,9 @@ export const loginErrorMessageMissingEmailAddressFromBody = loginErrorMessageMis
 
 export const loginErrorMessageMissingPasswordFromBody = loginErrorMessageMissingBodyElement + "password.";
 
-export const loginErrorMessageNoUserFoundForTheEmail = (email) => {
-  `Login failed because there is no user with the email address ${email}`;
-};
+export const loginErrorMessageNoUserFoundForTheEmail = (email) => `Login failed because there is no user with the email address ${email}`;
 
-export const loginErrorMessageWrongPassword = (email) => {
-  `Login failed due to the fact that the introduced password is wrong for the user with email address ${email}`;
-};
+export const loginErrorMessageWrongPassword = (email) => `Login failed due to the fact that the introduced password is wrong for the user with email address ${email}`;
 
 export const loginErrorMessageWrongCredentialsFrontendFacing = "Login failed due to invalid email or password";
 
@@ -29,6 +25,11 @@ export const userDeletionErrorMessageRequestFailedWithError = (email, error) =>{
 } 
 export const userDeletionErrorMessageRequestFailed = (email) =>{
   return userDeletionErrorMessageFailure + `${email}.`;
+}
+
+const STANDARD_UNAUTH_COOKIE_OBJ = {
+  statusCode: 401,
+  message: "User is not authenticated."
 }
 
 export const LIMIT = {
@@ -68,7 +69,10 @@ export const INFO_MESSAGE = {
   ATTRACTION_CACHED: (dbAttractionId) => `Attraction with id ${dbAttractionId} has been added to the attractions collection from the LocationIQ API`,
   ATTRACTION_CACHING_FAILED: "Attraction information cachinh to the database failed",
   ATTRACTION_NOT_CACHED_ON_PURPOSE: "Attraction information has not been cached to the database since writeToCache has been set as false",
-  USER_REGISTERED: (email) => `User ${email} registered successfully`
+  USER_REGISTERED: (email) => `User ${email} registered successfully`,
+  LOGIN_SESSION_CREATED: (sessionId, email) => `Login session with id ${sessionId} has been created for user with email address ${email}`,
+  USER_LOGGED_IN: (email) => `User with email ${email} has been logged in.`,
+  USER_LOGGED_OUT: "User was logged out successfully.",
 }
 
 export const ERROR_OBJECTS = {
@@ -83,6 +87,38 @@ export const ERROR_OBJECTS = {
       return {
         statusCode: 400,
         message: registrationErrorMessageUserWithEmailExists(email)
+      };
+    },
+    NO_COOKIE_FOUND: () => {
+      STANDARD_UNAUTH_COOKIE_OBJ.details = "No session cookie found.";
+      return STANDARD_UNAUTH_COOKIE_OBJ;
+    },
+    INVALID_SESSION_ID: () => {
+      STANDARD_UNAUTH_COOKIE_OBJ.details = "Invalid session ID format.";
+      return STANDARD_UNAUTH_COOKIE_OBJ;
+    },
+    SESSION_NOT_FOUND: () => {
+      STANDARD_UNAUTH_COOKIE_OBJ.details = "Session not found in the database.";
+      return STANDARD_UNAUTH_COOKIE_OBJ;
+    },
+    SESSION_EXPIRED: () => {
+      STANDARD_UNAUTH_COOKIE_OBJ.details = "Session expired.";
+      return STANDARD_UNAUTH_COOKIE_OBJ;
+    },
+    NO_COOKIE_LOGOUT: () => {
+      STANDARD_UNAUTH_COOKIE_OBJ.details = "Logout attempt without session cookie.";
+      return STANDARD_UNAUTH_COOKIE_OBJ;
+    },
+    NO_USER_FOUND_WITH_EMAIL: (email) => {
+      return {
+        statusCode: 401,
+        message: loginErrorMessageNoUserFoundForTheEmail(email)
+      };
+    },
+    WRONG_PASSWORD: (email) => {
+      return {
+        statusCode: 401,
+        message: loginErrorMessageWrongPassword(email)
       };
     },
     MISSING_API_KEY: (apiKeyUsage) => {
