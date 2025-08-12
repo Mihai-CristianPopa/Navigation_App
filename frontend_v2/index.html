@@ -96,6 +96,38 @@
                 </div>
             </div>
         </div>
+
+        <!-- Location Selection Dialog -->
+        <div id="used-for-hiding-location-dialog-overlay" hidden>
+            <div id="location-dialog-overlay" class="dialog-overlay">
+                <div id="location-dialog" class="confirmation-dialog">
+                    <div class="dialog-header">
+                        <h4>Select Location</h4>
+                    </div>
+                    <div class="dialog-body">
+                        <p style="margin-bottom: 1rem; color: #666;">
+                            No suitable results found. Please specify a country and optionally a city to search in a different area.
+                        </p>
+                        <form id="location-selection-form" class="location-form">
+                            <div class="form-group">
+                                <label for="country-select">Country *</label>
+                                <select id="country-select" required disabled>
+                                    <option value="">Loading countries...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="city-input">City (optional)</label>
+                                <input type="text" id="city-input" placeholder="Enter a city name...">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="dialog-actions">
+                        <button id="location-dialog-cancel" class="dialog-button secondary">Cancel</button>
+                        <button id="location-dialog-search" class="dialog-button primary">Search</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <!-- Floating message panel at the top -->
         <div id="used-for-hiding-message-panel" hidden>

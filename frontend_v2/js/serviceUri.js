@@ -104,4 +104,16 @@ export default class ServiceUri {
     return res.json();
   }
 
+  async fetchCountries() {
+    const url = `${this._backendOrigin}/api/countries`;
+    
+    const response = await this._fetchWithCredentials(url);
+  
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  
+    return response.json();
+  }
+
 };
