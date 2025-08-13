@@ -310,6 +310,7 @@ export default class MapManager {
     // his location as first attraction in list
     if (this._userLocationFetched) {
       this._addCurrentLocationToMapAndTriggerAttractionAdditionEvent();
+      this._removedLocation = false;
     }
 
     this._setBaseView();
