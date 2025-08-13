@@ -49,7 +49,7 @@ input, button, textarea, select {
 
 /* Message panel at the top */
 #message-panel {
-  top: 20px;
+  top: 30px;
   left: 50%;
   transform: translateX(-50%);
   max-width: 600px;
@@ -833,11 +833,6 @@ input:focus {
   padding: 0.5rem 0.75rem;
   font-size: 0.8rem;
   white-space: nowrap;
-}
-
-/* Adjust message panel when user is logged in */
-.authenticated #message-panel {
-  top: 80px; /* Move down to avoid user panel */
 }
 
 /* Loading state for auth forms */
