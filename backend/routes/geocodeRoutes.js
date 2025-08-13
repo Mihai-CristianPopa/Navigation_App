@@ -6,25 +6,28 @@ import { attractionDetailsController } from "../controllers/attractionDetailsCon
 import { cityController, countryController } from "../controllers/countryCityController.js";
 import { geocodeFallbackController } from "../controllers/geocodingFallbackController.js";
 import { requireAuthentication } from "../middleware/authMiddleware.js";
+import { checkDatabaseForAuth } from "../middleware/dbIsUpMiddleware.js";
 
 const router = express.Router();
 
+router.use(checkDatabaseForAuth);
+router.use(requireAuthentication);
 
 // Define the geocode route
-router.get("/geocode", requireAuthentication, geocodeController);
+router.get("/geocode", geocodeController); 
 
 // TODO add requireAuthentication
-router.get("/geocode-fallback", requireAuthentication, geocodeFallbackController);
+router.get("/geocode-fallback", geocodeFallbackController);
 
-router.get("/countries", requireAuthentication, countryController);
+router.get("/countries", countryController);
 
-router.get("/cities", requireAuthentication, cityController);
+router.get("/cities", cityController);
 
-router.get("/optimize", requireAuthentication, optimizeController);
+router.get("/optimize", optimizeController);
 
-router.get("/v2/optimize", requireAuthentication, optimizeV2Controller);
+router.get("/v2/optimize", optimizeV2Controller);
 
 // TODO either remove this or keep it based on decision taken for the controller
-router.get("/attraction-details", requireAuthentication, attractionDetailsController);
+router.get("/attraction-details", attractionDetailsController);
 
 export default router;

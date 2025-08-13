@@ -15,10 +15,11 @@ export default async function resolveBackendOrigin() {
     for (const origin of origins) {
         try {
             const res = await fetch(`${origin}/${healthEndpoint}`);
+            const data = await res.json();
             // No need for checking res.ok since we only send success responses
             // Only issue that could come up is if the backend is down which will be
             // Caught by the catch block
-            if (res.ok) {
+            if (res.ok && data.database === "UP") {
                 return origin;
             }
             console.warn(`Health check at ${origin} returned ${res.status}`);
