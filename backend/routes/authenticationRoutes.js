@@ -8,19 +8,6 @@ import { checkDatabaseForAuth } from "../middleware/dbIsUpMiddleware.js";
 
 const router = express.Router();
 
-// // Database check middleware for all authentication routes
-// const checkDatabaseForAuth = (req, res, next) => {
-//   // This only runs when someone hits /authentication/* routes
-//   if (req.app.locals.dbIsDown) {
-//     return res.status(503).json({
-//       success: false,
-//       message: "Authentication services are temporarily unavailable.",
-//       error: "DATABASE_UNAVAILABLE"
-//     });
-//   }
-//   next(); // Continue to the actual route handler
-// };
-
 // Apply database check to ALL authentication routes
 router.use(checkDatabaseForAuth);
 
