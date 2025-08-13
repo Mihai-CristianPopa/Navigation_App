@@ -18,6 +18,10 @@ input, button, textarea, select {
   font: inherit;
 }
 
+p {
+  text-wrap: pretty;
+}
+
 /* App container - full screen */
 #app-container {
   height: 100vh;
@@ -55,11 +59,12 @@ input, button, textarea, select {
   max-width: 600px;
   text-align: center;
   border-left: 4px solid #2196F3;
-}
-
-#app-explanation {
   font-size: 0.9rem;
   color: #333;
+}
+
+#message-panel.hidden {
+  display: none;
 }
 
 /* Controls panel on the left */

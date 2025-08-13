@@ -2,7 +2,7 @@ import { MESSAGES } from "./constants.js";
 
 export default class MessageManager {
   /**
-   * @param generalInformationParagraph - This is developed for the app-explanation <p>
+   * @param generalInformationParagraph - This is developed for the message-panel <p>
    * @param locationInformationParagraph
    */
   constructor(generalInformationParagraph, locationInformationParagraph) {
@@ -10,22 +10,38 @@ export default class MessageManager {
     this.locationInformationParagraph = locationInformationParagraph;
   }
 
+  _hideContainer(container) {
+    container.hidden = true;
+  }
+
+  /** Used for hiding the message panel */
+  hideMessagePanel() {
+    this._hideContainer(this.generalInformationParagraph);
+  }
+
+  _makeVisible(container) {
+    container.hidden = false;
+  }
+
   _showSuccessMessage(message, container = this.generalInformationParagraph) {
     container.textContent = message
     container.style.color = "#000000";
     container.style.fontWeight = "normal";
+    this._makeVisible(container);
   }
 
   _showWarnMessage(message, container = this.locationInformationParagraph) {
     container.textContent = message;
     container.style.color = "orange";
-    container.style.fontWeight = "bolder"; 
+    container.style.fontWeight = "bolder";
+    this._makeVisible(container); 
   }
 
   _showErrorMessage(message, container = this.generalInformationParagraph) {
     container.textContent = message;
     container.style.color = "red";
-    container.style.fontWeight = "bold"; 
+    container.style.fontWeight = "bold";
+    this._makeVisible(container); 
   }
 
   /**

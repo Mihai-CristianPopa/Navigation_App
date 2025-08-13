@@ -2,14 +2,14 @@ import authService from './authService.js';
 import { clearUserState } from "./main.js";
 
 class AuthUI {
-  constructor(manageAppExplanationParagraph) {
+  constructor(manageTextAreas) {
     this.authPanel = document.getElementById("used-for-hiding-auth-panel");
     this.userPanel = document.getElementById("used-for-hiding-user-panel");
     this.loginForm = document.getElementById("used-for-hiding-login-form");
     this.registerForm = document.getElementById("used-for-hiding-register-form");
     this.errorDiv = document.getElementById('auth-error');
     this.userEmailSpan = document.getElementById('user-email');
-    this.manageAppExplanationParagraph = manageAppExplanationParagraph;
+    this.manageTextAreas = manageTextAreas;
     
     this.setupEventListeners();
   }
@@ -41,14 +41,14 @@ class AuthUI {
     });
   }
 
-  showAuthPanel() {
+  _showAuthPanel() {
     this.authPanel.hidden = false;
     this.userPanel.hidden = true;
     this.hideError();
     this.showLoginForm();
   }
 
-  showUserPanel(user) {
+  _showUserPanel(user) {
     this.authPanel.hidden = true;
     this.userPanel.hidden = false;
     this.userEmailSpan.textContent = user.email;
@@ -92,15 +92,24 @@ class AuthUI {
     }
   }
 
-  showSearchPanelAndMessagePanel() {
-    document.getElementById("used-for-hiding-controls-panel").hidden = false;
-    document.getElementById("used-for-hiding-message-panel").hidden = false;
-    this.manageAppExplanationParagraph.showDefaultAppSuccessMessage();
+  showAuthenticatedUserAppState(user){
+    this._showUserPanel(user);
+    this._showSearchPanelAndMessagePanel();
   }
 
-  hideSearchPanelAndMessagePanel() {
+  showNotAuthenticatedUserAppState() {
+    this._showAuthPanel();
+    this._hideSearchPanelAndMessagePanel();
+  }
+
+  _showSearchPanelAndMessagePanel() {
+    document.getElementById("used-for-hiding-controls-panel").hidden = false;
+    this.manageTextAreas.showDefaultAppSuccessMessage();
+  }
+
+  _hideSearchPanelAndMessagePanel() {
     document.getElementById("used-for-hiding-controls-panel").hidden = true;
-    document.getElementById("used-for-hiding-message-panel").hidden = true;
+    this.manageTextAreas.hideMessagePanel();
   }
 
   async handleLogin() {
@@ -114,8 +123,7 @@ class AuthUI {
       const result = await authService.login(email, password);
       
       if (result.ok) {
-        this.showUserPanel(authService.user);
-        this.showSearchPanelAndMessagePanel();
+        this.showAuthenticatedUserAppState(authService.user);
       } else {
         this.showError(result.message);
       }
@@ -168,8 +176,7 @@ class AuthUI {
     } catch (error) {
       console.error('Logout error:', error);
     }
-    this.showAuthPanel();
-    this.hideSearchPanelAndMessagePanel();
+    this.showNotAuthenticatedUserAppState();
     document.body.classList.remove('authenticated');
       
     // Clear any app state if needed

@@ -7,7 +7,7 @@ import MapManager from "./mapManager.js";
 import { EVENTS } from "./constants.js";
 
 const manageSelectedAttractions = new AttractionManager(document.getElementById("attractions-items"));
-const manageTextAreas = new MessageManager(document.getElementById("app-explanation"), document.getElementById("location-status"));
+const manageTextAreas = new MessageManager(document.getElementById("message-panel"), document.getElementById("location-status"));
 const authUI = new AuthUI(manageTextAreas);
 const geocodingRequestManager = new ServiceUri();
 const mapManager = new MapManager("map", [44.435423, 26.102287], 19, "bottomright");
@@ -23,37 +23,22 @@ const queriesForWhichFallbackSuggestionWasRequested = [];
 const searchInput = document.getElementById("search-input");
 const suggestionList = document.getElementById("suggestions");
 
-// // Initialize authentication first
+// Initialize authentication first
 async function initializeApp() {
 const backendAvailable = await authService.initialize();
   
   if (backendAvailable) {
     if (authService.isAuthenticated) {
-//       // User is already logged in
-      authUI.showUserPanel(authService.user);
-      showSearchPanelAndMessagePanel();
+      // User is already logged in
+      authUI.showAuthenticatedUserAppState(authService.user);
     } else {
-//       // User needs to authenticate
-      authUI.showAuthPanel();
-      hideSearchPanelAndMessagePanel();
+      // User needs to authenticate
+      authUI.showNotAuthenticatedUserAppState();
     }
   } else {
     // Backend not available - show limited functionality
     manageTextAreas.showBackendNotAvailableMessage();
-    document.getElementById("used-for-hiding-message-panel").hidden = false;
-    // hideSearchPanelAndMessagePanel();
   }
-}
-
-function showSearchPanelAndMessagePanel() {
-  document.getElementById("used-for-hiding-controls-panel").hidden = false;
-  document.getElementById("used-for-hiding-message-panel").hidden = false;
-  manageTextAreas.showDefaultAppSuccessMessage();
-}
-
-function hideSearchPanelAndMessagePanel() {
-  document.getElementById("used-for-hiding-controls-panel").hidden = true;
-  document.getElementById("used-for-hiding-message-panel").hidden = true;
 }
 
 export function clearUserState() {
