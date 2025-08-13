@@ -1,4 +1,4 @@
-import { MESSAGES, EVENTS } from "./constants.js";
+import { MESSAGES } from "./constants.js";
 
 export default class MessageManager {
   /**
