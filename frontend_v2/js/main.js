@@ -7,8 +7,8 @@ import MapManager from "./mapManager.js";
 import { EVENTS } from "./constants.js";
 
 const manageSelectedAttractions = new AttractionManager(document.getElementById("attractions-items"));
-const manageAppExplanationParagraph = new MessageManager(document.getElementById("app-explanation"), document.getElementById("location-status"));
-const authUI = new AuthUI(manageAppExplanationParagraph);
+const manageTextAreas = new MessageManager(document.getElementById("app-explanation"), document.getElementById("location-status"));
+const authUI = new AuthUI(manageTextAreas);
 const geocodingRequestManager = new ServiceUri();
 const mapManager = new MapManager("map", [44.435423, 26.102287], 19, "bottomright");
 
@@ -39,7 +39,7 @@ const backendAvailable = await authService.initialize();
     }
   } else {
     // Backend not available - show limited functionality
-    manageAppExplanationParagraph.showBackendNotAvailableMessage();
+    manageTextAreas.showBackendNotAvailableMessage();
     document.getElementById("used-for-hiding-message-panel").hidden = false;
     // hideSearchPanelAndMessagePanel();
   }
@@ -48,7 +48,7 @@ const backendAvailable = await authService.initialize();
 function showSearchPanelAndMessagePanel() {
   document.getElementById("used-for-hiding-controls-panel").hidden = false;
   document.getElementById("used-for-hiding-message-panel").hidden = false;
-  manageAppExplanationParagraph.showDefaultAppSuccessMessage();
+  manageTextAreas.showDefaultAppSuccessMessage();
 }
 
 function hideSearchPanelAndMessagePanel() {
@@ -91,7 +91,7 @@ function clearSuggestions(clearSearch = true) {
 
 /** Adds the suggestions to the suggestion list and displays them. */
 function processGeocodingSearchResults(items) {
-    manageAppExplanationParagraph.showDefaultAppSuccessMessage();
+    manageTextAreas.showDefaultAppSuccessMessage();
 
     // DocumentFragment optimizes the DOM interaction when running append repeatedly 
     const frag = document.createDocumentFragment();
@@ -119,7 +119,7 @@ function processGeocodingSearchResults(items) {
 /** Handles the response of the suggestions request. */
 async function performSearch() {
   const currentQuery = searchInput.value.trim();
-  if (!currentQuery) return manageAppExplanationParagraph.showNoQueryFoundErrorMessage("attraction");
+  if (!currentQuery) return manageTextAreas.showNoQueryFoundErrorMessage("attraction");
 
   lastQuery = currentQuery;
 
@@ -127,11 +127,11 @@ async function performSearch() {
     lastSearchResponse = await geocodingRequestManager.fetchSuggestions(lastQuery);
     searchedQueries.push(currentQuery);
     const items = lastSearchResponse.options;
-    if (!items.length) return manageAppExplanationParagraph.showNoSuggestionsFoundErrorMessage(lastQuery);
+    if (!items.length) return manageTextAreas.showNoSuggestionsFoundErrorMessage(lastQuery);
     processGeocodingSearchResults(items);
   } catch (err) {
     console.error(err);
-    manageAppExplanationParagraph.showRequestErrorMessage(lastQuery);
+    manageTextAreas.showRequestErrorMessage(lastQuery);
   }
 }
 
@@ -152,7 +152,7 @@ function processSelectedSuggestion(event) {
     showLocationSelectionDialog();
   } else if (li.dataset.id === "-1" && queriesForWhichFallbackSuggestionWasRequested.includes(lastQuery)){
     clearSuggestions();
-    manageAppExplanationParagraph.showNoSuggestionMatch(lastQuery);
+    manageTextAreas.showNoSuggestionMatch(lastQuery);
     // show failure message
     // provide a different way of selecting that specific attraction
     // maybe center on the city they are interested in
@@ -197,7 +197,7 @@ async function showLocationSelectionDialog() {
 
     } catch (error) {
       console.error('Failed to load countries for dialog:', error);
-      manageAppExplanationParagraph.showCountrySelectionDialogErrorMessage();
+      manageTextAreas.showCountrySelectionDialogErrorMessage();
       clearSearchQuery();
       return;
     }
@@ -264,7 +264,7 @@ async function handleStructuredSearch() {
   const countrySelect = document.getElementById("country-select");
   const countryCode = countrySelect.value.trim();
   if (!countryCode) {
-    manageAppExplanationParagraph.showNoQueryFoundErrorMessage("country");
+    manageTextAreas.showNoQueryFoundErrorMessage("country");
     return;
   }
 
@@ -274,12 +274,12 @@ async function handleStructuredSearch() {
     // Perform the structured search request
     lastSearchResponse = await geocodingRequestManager.fetchSuggestionsFallback(lastQuery, countryCode);
     const items = lastSearchResponse.options;
-    if (!items.length) return manageAppExplanationParagraph.showNoSuggestionsFoundErrorMessage(lastQuery);
+    if (!items.length) return manageTextAreas.showNoSuggestionsFoundErrorMessage(lastQuery);
     queriesForWhichFallbackSuggestionWasRequested.push(lastQuery);
     processGeocodingSearchResults(items);
   } catch (error) {
     console.error(error);
-    manageAppExplanationParagraph.showRequestErrorMessage(`${lastQuery} ${country} ${city}`);
+    manageTextAreas.showRequestErrorMessage(`${lastQuery} ${country} ${city}`);
   }
 }
 
@@ -353,16 +353,16 @@ function showCollapsedSuggestions() {
 }
 
 document.getElementById("routing-button").addEventListener("click", async () => {
-  if (!manageSelectedAttractions.enoughAttractionsToRoute) return manageAppExplanationParagraph.showNotEnoughAttractionsSelectedErrorMessage();
+  if (!manageSelectedAttractions.enoughAttractionsToRoute) return manageTextAreas.showNotEnoughAttractionsSelectedErrorMessage();
   mapManager.clearLastRoute();
   try {
     // const mapBoxOptimizeResponse = await geocodingRequestManager.fetchTSPRouting(manageSelectedAttractions.coordinatesString);
     const ownOptimizationResponse = await geocodingRequestManager.fetchOwnTspRouting(manageSelectedAttractions.waypointIds, manageSelectedAttractions.coordinatesString);
-    manageAppExplanationParagraph.showDefaultAppSuccessMessage();
+    manageTextAreas.showDefaultAppSuccessMessage();
     // mapManager.showRouteWithNumberedMarkers(mapBoxOptimizeResponse.waypoints, mapBoxOptimizeResponse.trips[0].geometry);
     mapManager.showRouteWithNumberedMarkersV2(ownOptimizationResponse);
   } catch (error) {
-    manageAppExplanationParagraph.showErrorWhileGettingRoute();
+    manageTextAreas.showErrorWhileGettingRoute();
   }
 });
 
@@ -406,13 +406,13 @@ document.addEventListener(EVENTS.REMOVE_ATTRACTIONS, () => manageSelectedAttract
 
 document.addEventListener(EVENTS.USER_LOCATION_FOUND, (e) => {
   manageSelectedAttractions.addAttractionToContainer(e.detail);
-  manageAppExplanationParagraph.showLocationIsStartingPoint();
+  manageTextAreas.showLocationIsStartingPoint();
   console.log('User location added to attractions:', e.detail);
 });
 
 document.addEventListener(EVENTS.USER_LOCATION_ERROR, (e) => {
   console.error('Failed to get user location:', e.detail.error);
-  manageAppExplanationParagraph.showLocationNotFoundFirstWaypointBecomesStartingPoint();
+  manageTextAreas.showLocationNotFoundFirstWaypointBecomesStartingPoint();
 });
 
 document.addEventListener("click", collapseSuggestionsWhenClickingOutsideTheSearchContainer);
@@ -422,3 +422,7 @@ searchInput.addEventListener("focus", showCollapsedSuggestions);
 searchInput.addEventListener("click", showCollapsedSuggestions);
 
 suggestionList.addEventListener("click", processSelectedSuggestion);
+
+document.addEventListener(EVENTS.CURRENT_LOCATION_NOT_THE_STARTING_POINT_ANYMORE, () => manageTextAreas.showLocationIsNotTheStartingPointAnymore());
+document.addEventListener(EVENTS.CURRENT_LOCATION_REMOVED, () => manageTextAreas.showLocationHasBeenRemoved());
+document.addEventListener(EVENTS.CURRENT_LOCATION_SET_AS_START, () => manageTextAreas.showLocationIsStartingPoint());

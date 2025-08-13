@@ -12,6 +12,7 @@ export default class MapManager {
     this._baseCoordinates = coordinates;
     this._locationRadius = 0;
     this._locationId = null;
+    this._removedLocation = null;
     this._baseZoom = zoom;
     this._popupMarkers = [];
     this._permanentLabelMarkers = [];
@@ -35,6 +36,8 @@ export default class MapManager {
 
       this._userLocationFetched = true;
 
+      this._removedLocation = false;
+
       this._locationId = CURRENT_LOCATION.id();
 
       this._addCurrentLocationToMapAndTriggerAttractionAdditionEvent();
@@ -51,6 +54,19 @@ export default class MapManager {
 
     document.addEventListener(EVENTS.STARTING_POINT_SET, (e) => {
       const attractionId = e.detail.dataset.id;
+      // If there is a location set and it has not been removed
+      // if a location has been set this property is set to fault, defaults to null
+      // on removal of location this is set to tru
+      if (this._removedLocation === false && attractionId !== this._locationId) {
+        // This means the Current Location is moved from the first position
+        // So we will send an event to the message handler to show a different message.
+        document.dispatchEvent(new CustomEvent(EVENTS.CURRENT_LOCATION_NOT_THE_STARTING_POINT_ANYMORE));
+      }
+
+      if (this._removedLocation === false && attractionId === this._locationId) {
+        document.dispatchEvent(new CustomEvent(EVENTS.CURRENT_LOCATION_SET_AS_START));
+      }
+
       this._moveMarkerFirst(attractionId);
     });
 
@@ -78,6 +94,10 @@ export default class MapManager {
       }
       const listItem = e.detail;
       const attractionId = listItem.dataset.id;
+      if (this._removedLocation === false && attractionId === this._locationId) {
+        document.dispatchEvent(new CustomEvent(EVENTS.CURRENT_LOCATION_REMOVED));
+        this._removedLocation = true;
+      }
       this._removeMarkersAssociatedToAttraction(attractionId);
       console.log('Attraction markers removed from map');
 

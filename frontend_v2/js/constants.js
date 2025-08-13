@@ -13,8 +13,10 @@ export const EVENTS = {
 
   ATTRACTION_REMOVAL_CONFIRMED: "removeSingleAttractionConfirmed",
 
-
-  STARTING_POINT_SET: "startingPointSet"
+  STARTING_POINT_SET: "startingPointSet",
+  CURRENT_LOCATION_REMOVED: "currentLocationRemoved",
+  CURRENT_LOCATION_NOT_THE_STARTING_POINT_ANYMORE: "curentLocationNotStart",
+  CURRENT_LOCATION_SET_AS_START: "currentLocationIsStart"
 };
 
 export const CURRENT_LOCATION = {
@@ -39,5 +41,9 @@ export const MESSAGES = {
   SUCCESS: {
     DEFAULT_APP_EXPLANATION: "This application is used for routing you to the attractions you want to see.",
     LOCATION_IS_STARTING_POINT: "Your current location is the starting point."
+  },
+  WARN: {
+    LOCATION_HAS_BEEN_REMOVED: "Your current location has been removed from the waypoint list, the first waypoint will act as the start and endpoint of your route.",
+    LOCATION_NOT_STARTING_POINT_ANYMORE: "Your current location is not the starting point anymore, the first waypoint will act as the start and endpoint of your route."
   }
 }

@@ -1,4 +1,4 @@
-import { MESSAGES } from "./constants.js";
+import { MESSAGES, EVENTS } from "./constants.js";
 
 export default class MessageManager {
   /**
@@ -14,6 +14,12 @@ export default class MessageManager {
     container.textContent = message
     container.style.color = "#000000";
     container.style.fontWeight = "normal";
+  }
+
+  _showWarnMessage(message, container = this.locationInformationParagraph) {
+    container.textContent = message;
+    container.style.color = "orange";
+    container.style.fontWeight = "bolder"; 
   }
 
   _showErrorMessage(message, container = this.generalInformationParagraph) {
@@ -91,5 +97,13 @@ export default class MessageManager {
 
   showLocationIsStartingPoint() {
     this._showSuccessMessage(MESSAGES.SUCCESS.LOCATION_IS_STARTING_POINT, this.locationInformationParagraph);
+  }
+
+  showLocationHasBeenRemoved() {
+    this._showWarnMessage(MESSAGES.WARN.LOCATION_HAS_BEEN_REMOVED)
+  }
+
+  showLocationIsNotTheStartingPointAnymore() {
+    this._showWarnMessage(MESSAGES.WARN.LOCATION_NOT_STARTING_POINT_ANYMORE)
   }
 }
