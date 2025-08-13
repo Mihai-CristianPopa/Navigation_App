@@ -96,9 +96,9 @@ function processGeocodingSearchResults(items) {
     // DocumentFragment optimizes the DOM interaction when running append repeatedly 
     const frag = document.createDocumentFragment();
 
-    items.forEach(({ display_name, lat, lon, place_id }) => {
+    items.forEach(({ type, display_name, lat, lon, place_id }) => {
       const li = document.createElement("li");
-      li.textContent = display_name;
+      li.textContent = `${type}: ${display_name}`;
       li.dataset.lat = lat;
       li.dataset.lon = lon;
       li.dataset.id = place_id;
