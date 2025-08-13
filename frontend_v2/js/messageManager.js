@@ -23,10 +23,10 @@ export default class MessageManager {
   }
 
   /**
-   * @description Used when user makes a search attraction request without inputting any query.
+   * @description Used when user makes a request without inputting any needed parameter.
    */
-  showNoQueryFoundErrorMessage() {
-    this._showErrorMessage(MESSAGES.ERROR.NO_QUERY_FOUND);
+  showNoQueryFoundErrorMessage(input) {
+    this._showErrorMessage(MESSAGES.ERROR.NO_INPUT_FOUND(input));
   }
 
   /**
@@ -35,6 +35,21 @@ export default class MessageManager {
    */
   showNoSuggestionsFoundErrorMessage(q) {
     this._showErrorMessage(MESSAGES.ERROR.NO_SUGGESTIONS(q));  
+  }
+
+  /**
+   * @description Used when no suggestion has been picked by the user from either of the two geocoding requests..
+   * @param {String} q - Attraction used for the request
+   */
+  showNoSuggestionMatch(q) {
+    this._showErrorMessage(MESSAGES.ERROR.NO_SUGGESTION_MATCHED_USER_PERSPECTIVE(q));  
+  }
+
+  /**
+   * @description Used when an error occured while opening the country selection dialog.
+   */
+  showCountrySelectionDialogErrorMessage() {
+    this._showErrorMessage(MESSAGES.ERROR.COUNTRY_SELECTION_DIALOG_FAILURE);
   }
 
   /**

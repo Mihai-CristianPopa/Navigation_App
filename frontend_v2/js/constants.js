@@ -26,8 +26,11 @@ export const CURRENT_LOCATION = {
 export const MESSAGES = {
   ERROR: {
     NO_QUERY_FOUND: "There was no attraction inputted for the previous request.",
+    NO_INPUT_FOUND: (i) => `There was no ${i} inputted for the previous request.`,
     NO_SUGGESTIONS: (q) => `No suggestions found for ${q}.`,
+    NO_SUGGESTION_MATCHED_USER_PERSPECTIVE: (q) => `No suggestions matched your search: ${q}. Please try inputting its exact name from the map.`,
     REQUEST_ATTRACTION_INTERNAL_SERVER_ERROR: (q) => `There was an internal server error when processing: ${q}.`,
+    COUNTRY_SELECTION_DIALOG_FAILURE: 'Failed to load the country selection dialog. Please try again later.',
     BACKEND_NOT_AVAILABLE: "Currently the application functionality can not be used. Please try again later.",
     LESS_THAN_TWO_ATTRACTIONS: "Currently there are fewer than two attractions selected so you can not request the routing. Please add some more attractions.",
     LOCATION_NOT_FETCHED: "Your location has not been found. Please take into consideration that the first location you search and select will be considered your starting point.",

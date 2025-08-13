@@ -24,6 +24,11 @@ export default class ServiceUri {
     }
   };
 
+  _buildUriWithParams = (uri, params) => {
+    const ecodedParams = new URLSearchParams(params);
+    return `${uri}?${ecodedParams}`;
+  } 
+
   _buildOptimizeApiUri = (coordinatesList) => {
     const params = new URLSearchParams({
       coordinatesList: coordinatesList
@@ -111,6 +116,31 @@ export default class ServiceUri {
   
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  
+    return response.json();
+  }
+
+  async fetchCities(countryCode) {
+    const url = `${this._backendOrigin}/api/cities`;
+    
+    const response = await this._fetchWithCredentials(this._buildUriWithParams(url, {countryCode}));
+  
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
+    }
+  
+    return response.json();
+  }
+
+  // TODO maybe add proximity parameter
+  async fetchSuggestionsFallback(place, countryCode) {
+    const url = `${this._backendOrigin}/api/geocode-fallback`;
+
+    const response = await this._fetchWithCredentials(this._buildUriWithParams(url, {place, countryCode}));
+
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
     }
   
     return response.json();

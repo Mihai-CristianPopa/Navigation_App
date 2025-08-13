@@ -30,7 +30,8 @@ router.post("/login", loginController);
 router.post("/register", registerController);
 
 // TODO this should be accessible only to the admin role
-router.delete("/delete-user", deleteUserController);
+// Removed for data-safety
+// router.delete("/delete-user", deleteUserController);
 
 router.get("/me", requireAuthentication, (req, res) => {
   return res.status(200).json({

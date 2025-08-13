@@ -1,12 +1,4 @@
-const errorMessageMissingBodyElement = " failed due to the body of the request missing the ";
-
-const loginErrorMessageMissingBodyElement = "Login" + errorMessageMissingBodyElement;
-
 export const registrationErrorMessageUserWithEmailExists = (email) => `Registration failed because there already exists an user with email address ${email}.`;
-
-export const loginErrorMessageMissingEmailAddressFromBody = loginErrorMessageMissingBodyElement + "email address.";
-
-export const loginErrorMessageMissingPasswordFromBody = loginErrorMessageMissingBodyElement + "password.";
 
 export const loginErrorMessageNoUserFoundForTheEmail = (email) => `Login failed because there is no user with the email address ${email}`;
 
@@ -45,18 +37,6 @@ export const LIMIT = {
 export const FAILED_TO_INCREMENT_REQUEST_COUNT = (email, apiProvider, endpoint, version) => `Failed to log API request for user ${email} ${apiProvider}/${endpoint}/${version}`;
 
 export const FAILED_TO_GET_REQUEST_COUNT = (apiProvider, endpoint, version) => `Failed to get daily API request count for ${apiProvider}/${endpoint}/${version}`;
-
-export const LOG_MESSAGE = {
-  SUCCESS: {
-    MBOX_DIRECTIONS_MATRIX: "Mapbox Directions Matrix API successfully returned a response.",
-    OWN_ATTRACTIONS_ORDER_ALG: "Own attractions ordering algorithm finished successfully.",
-    MBOX_DIRECTIONS_AFTER_ORDERING: "Mapbox Directions V5 API successfully returned a response.",
-    GEOCODE_CACHE_FOUND: "Response for the Geocoding request found in the cache.",
-    DAILY_EXTERNAL_API_REQUEST_COUNT: (count, externalApi, endpoint) => {
-      return `Today there have been ${count} ${externalApi}/${endpoint} request(s) made.`;
-    } 
-  }
-};
 
 export const INFO_MESSAGE = {
   MBOX_DIRECTIONS_MATRIX: "Mapbox Directions Matrix API successfully returned a response.",
@@ -190,6 +170,10 @@ export const EXTERNAL_APIS = {
         NAME: "Optimized-Trips",
         VERSION: "v1"
       },
+      GEOCODE: {
+        NAME: "Geocode",
+        VERSION: "v6"
+      }
     }
   }
 }

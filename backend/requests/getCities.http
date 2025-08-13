@@ -1,0 +1,24 @@
+# Successful request
+# @name login
+POST http://localhost:3000/authentication/login HTTP/1.1
+content-type: application/json
+
+{
+    "email": "michaelScott@dundermifflin.com",
+    "password": "davidWallaceIsAFool"
+}
+
+### 2. Extract session ID from login response cookies
+@fullCookie = {{login.response.headers.set-cookie}}
+
+### Get cities
+GET http://localhost:3000/api/cities?countryCode=IT HTTP/1.1
+Cookie: {{fullCookie}}
+
+### Get cities fail due to missing country code
+GET http://localhost:3000/api/cities HTTP/1.1
+Cookie: {{fullCookie}}
+
+### 3. Use session for logout
+POST http://localhost:3000/authentication/logout HTTP/1.1
+Cookie: {{fullCookie}}

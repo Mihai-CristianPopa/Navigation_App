@@ -33,7 +33,7 @@
                             <div class="form-group">
                                 <label for="login-password">Password:</label>
                                 <!-- <input type="password" id="login-password" required autocomplete="current-password"> -->
-                                <input type="password" id="login-password">
+                                <input type="password" id="login-password" required>
                             </div>
                             <button type="submit" class="auth-button primary">Sign In</button>
                             <button type="button" id="show-register" class="auth-button secondary">Need an account? Register</button>
@@ -115,10 +115,13 @@
                                     <option value="">Loading countries...</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label for="city-input">City (optional)</label>
-                                <input type="text" id="city-input" placeholder="Enter a city name...">
-                            </div>
+                            <!-- Removing the option to select a city for now -->
+                            <!-- <div class="form-group">
+                                <label for="city-select">City (optional)</label>
+                                    <select id="city-select">
+                                        <option value="">Loading cities...</option>
+                                    </select>
+                            </div> -->
                         </form>
                     </div>
                     <div class="dialog-actions">

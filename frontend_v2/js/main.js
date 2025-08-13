@@ -1,4 +1,3 @@
-import resolveBackendOrigin from "./checkBackend.js";
 import AttractionManager from "./attractionManager.js";
 import MessageManager from "./messageManager.js";
 import authService from "./authService.js";
@@ -18,8 +17,10 @@ let lastSearchResponse = null;
 let lastQuery = null;
 let hasSuggestions = false;
 let countriesCache = null;
+const searchedQueries = [];
+const queriesForWhichFallbackSuggestionWasRequested = [];
 
-const searchInput          = document.getElementById("search-input");
+const searchInput = document.getElementById("search-input");
 const suggestionList = document.getElementById("suggestions");
 
 // // Initialize authentication first
@@ -66,24 +67,29 @@ export function clearUserState() {
   countriesCache = null;
   sessionStorage.removeItem('countries');
 
+  searchedQueries = [];
+  queriesForWhichFallbackSuggestionWasRequested = [];
+
   lastSearchResponse = null;
   lastQuery = null;
   hasSuggestions = false;
 }
 
-// Wait for authentication before initializing the app
 initializeApp();
 
+function clearSearchQuery() {
+  searchInput.value = "";
+}
 
-
-function clearSuggestions() {
+function clearSuggestions(clearSearch = true) {
+  if (clearSearch === true) clearSearchQuery();
   suggestionList.innerHTML = "";
   suggestionList.hidden    = true;
-  searchInput.value = "";
   searchInput.setAttribute("aria-expanded", "false");
   hasSuggestions = false;
 }
 
+/** Adds the suggestions to the suggestion list and displays them. */
 function processGeocodingSearchResults(items) {
     manageAppExplanationParagraph.showDefaultAppSuccessMessage();
 
@@ -110,39 +116,18 @@ function processGeocodingSearchResults(items) {
     hasSuggestions = true;
 }
 
-// Main search function
+/** Handles the response of the suggestions request. */
 async function performSearch() {
-  lastQuery = searchInput.value.trim();
-  if (!lastQuery) return manageAppExplanationParagraph.showNoQueryFoundErrorMessage();
+  const currentQuery = searchInput.value.trim();
+  if (!currentQuery) return manageAppExplanationParagraph.showNoQueryFoundErrorMessage("attraction");
+
+  lastQuery = currentQuery;
 
   try {
     lastSearchResponse = await geocodingRequestManager.fetchSuggestions(lastQuery);
+    searchedQueries.push(currentQuery);
     const items = lastSearchResponse.options;
     if (!items.length) return manageAppExplanationParagraph.showNoSuggestionsFoundErrorMessage(lastQuery);
-
-    // manageAppExplanationParagraph.showDefaultAppSuccessMessage();
-
-    // // DocumentFragment optimizes the DOM interaction when running append repeatedly 
-    // const frag = document.createDocumentFragment();
-
-    // items.forEach(({ display_name, lat, lon, place_id }) => {
-    //   const li = document.createElement("li");
-    //   li.textContent = display_name;
-    //   li.dataset.lat = lat;
-    //   li.dataset.lon = lon;
-    //   li.dataset.id = place_id;
-    //   frag.append(li);
-    // });
-
-    // const li = document.createElement("li");
-    // li.textContent = "None of the above...";
-    // li.dataset.id = "-1";
-    // frag.append(li);
-
-    // suggestionList.append(frag);
-    // suggestionList.hidden = false;
-    // searchInput.setAttribute("aria-expanded", "true");
-    // hasSuggestions = true;
     processGeocodingSearchResults(items);
   } catch (err) {
     console.error(err);
@@ -150,16 +135,27 @@ async function performSearch() {
   }
 }
 
+/** Handles the selected suggestion. If selected suggestion is a proper entry, then markers are added to the map,
+ * Otherwise, if user selects none of the above first time, a popup opens where the user can select the country from which
+ * The attraction he wants to see is and a new request to get suggestions is made to a different provider while passing
+ * Also the country code. If the user clicks None of the above a second time, that is still pending to be implemented.
+ */
 function processSelectedSuggestion(event) {
   const li = event.target.closest("li");
   if (!li) return;
 
-  if (li.dataset.id === "-1") {
+  if (li.dataset.id === "-1" && !queriesForWhichFallbackSuggestionWasRequested.includes(lastQuery)) {
     // Make another backend request and try again in a different form,
     // Maybe request a nearby city
     // For now just clear the value and the suggestions
-    // clearSuggestions();
+    clearSuggestions(false);
     showLocationSelectionDialog();
+  } else if (li.dataset.id === "-1" && queriesForWhichFallbackSuggestionWasRequested.includes(lastQuery)){
+    clearSuggestions();
+    manageAppExplanationParagraph.showNoSuggestionMatch(lastQuery);
+    // show failure message
+    // provide a different way of selecting that specific attraction
+    // maybe center on the city they are interested in
   } else {
     const lat  = parseFloat(li.dataset.lat);
     const lon  = parseFloat(li.dataset.lon);
@@ -180,41 +176,36 @@ function processSelectedSuggestion(event) {
   }
 }
 
+/** Check if countries are available already in the current session cache. If not call loadCountries method.
+ * Then display the popover after clearing its fields.
+ */
 async function showLocationSelectionDialog() {
   const overlay = document.getElementById("used-for-hiding-location-dialog-overlay");
   const countrySelect = document.getElementById("country-select");
-  const cityInput = document.getElementById("city-input");
+  // const cityInput = document.getElementById("city-select");
   
   // Load countries if not already loaded
   if (!countriesCache) {
     try {
       const countries = await loadCountries();
       populateCountrySelect(countries);
+
+      countrySelect.value = "";
+      // cityInput.value = "";
+      overlay.hidden = false;
+      setTimeout(() => countrySelect.focus(), 100);
+
     } catch (error) {
       console.error('Failed to load countries for dialog:', error);
-      manageAppExplanationParagraph.showRequestErrorMessage('Failed to load countries');
+      manageAppExplanationParagraph.showCountrySelectionDialogErrorMessage();
+      clearSearchQuery();
       return;
     }
   }
-
-  // Reset form
-  countrySelect.value = "";
-  cityInput.value = "";
-  
-  // Show dialog
-  overlay.hidden = false;
-  
-  // Focus on country select
-  setTimeout(() => countrySelect.focus(), 100);
 }
 
-async function loadCountries() {
-  // Check if we already have countries cached in session
-  if (countriesCache) {
-    return countriesCache;
-  }
-
-  // Check session storage first
+/** Load contries from the session storage. */
+function loadItemsFromSessionStorage() {
   const cachedCountries = sessionStorage.getItem('countries');
   if (cachedCountries) {
     try {
@@ -225,11 +216,21 @@ async function loadCountries() {
       sessionStorage.removeItem('countries');
     }
   }
+}
+
+/** Check if there are currently countries stored at the variable level. If not check in the session storage.
+ * Finally make a request to the backend.
+ */
+async function loadCountries() {
+  // Check if we already have countries cached in session
+  if (countriesCache) return countriesCache;
+
+  loadItemsFromSessionStorage();
 
   // Fetch from backend
   try {
     const response = await geocodingRequestManager.fetchCountries();
-    countriesCache = response.countries || [];
+    countriesCache = response.countries;
     
     // Cache in session storage
     sessionStorage.setItem('countries', JSON.stringify(countriesCache));
@@ -237,24 +238,10 @@ async function loadCountries() {
     return countriesCache;
   } catch (error) {
     console.error('Failed to load countries from backend:', error);
-    
-    // Fallback to hardcoded list if backend fails
-    countriesCache = [
-      'United States', 'United Kingdom', 'Germany', 'France', 'Italy', 
-      'Spain', 'Netherlands', 'Belgium', 'Switzerland', 'Austria',
-      'Poland', 'Romania', 'Czech Republic', 'Hungary', 'Portugal',
-      'Greece', 'Croatia', 'Slovenia', 'Slovakia', 'Bulgaria',
-      'Canada', 'Australia', 'Japan', 'South Korea', 'Brazil',
-      'Mexico', 'India', 'China'
-    ];
-    
-    // Cache the fallback list
-    sessionStorage.setItem('countries', JSON.stringify(countriesCache));
-    
-    return countriesCache;
   }
 }
 
+/** Hide the popup with the country selection for the new backend request. */
 function hideLocationSelectionDialog() {
   const overlay = document.getElementById("used-for-hiding-location-dialog-overlay");
   overlay.hidden = true;
@@ -263,24 +250,21 @@ function hideLocationSelectionDialog() {
 // Add event listeners for location dialog
 document.getElementById("location-dialog-cancel").addEventListener("click", () => {
   hideLocationSelectionDialog();
-  // clearSuggestions();
 });
 
-document.getElementById("location-dialog-search").addEventListener("click", (event) => {
-  event.preventDefault();
+document.getElementById("location-dialog-search").addEventListener("click", (e) => {
+  e.preventDefault();
   handleStructuredSearch();
 });
 
-function handleStructuredSearch() {
+/** Handles the response of the fallback geocoding request. */
+async function handleStructuredSearch() {
+  // const cityInput = document.getElementById("city-select");
+  // const city = cityInput.value.trim();
   const countrySelect = document.getElementById("country-select");
-  const cityInput = document.getElementById("city-input");
-  
-  const country = countrySelect.value.trim();
-  const city = cityInput.value.trim();
-
-
-  if (!country) {
-    manageAppExplanationParagraph.showNoQueryFoundErrorMessage();
+  const countryCode = countrySelect.value.trim();
+  if (!countryCode) {
+    manageAppExplanationParagraph.showNoQueryFoundErrorMessage("country");
     return;
   }
 
@@ -288,39 +272,64 @@ function handleStructuredSearch() {
 
   try {
     // Perform the structured search request
-    // processGeocodingSearchResults(items);
+    lastSearchResponse = await geocodingRequestManager.fetchSuggestionsFallback(lastQuery, countryCode);
+    const items = lastSearchResponse.options;
+    if (!items.length) return manageAppExplanationParagraph.showNoSuggestionsFoundErrorMessage(lastQuery);
+    queriesForWhichFallbackSuggestionWasRequested.push(lastQuery);
+    processGeocodingSearchResults(items);
   } catch (error) {
     console.error(error);
     manageAppExplanationParagraph.showRequestErrorMessage(`${lastQuery} ${country} ${city}`);
   }
 }
 
-function populateCountrySelect(countries) {
-  const countrySelect = document.getElementById("country-select");
-  // DocumentFragment optimizes the DOM interaction when running append repeatedly 
-  const frag = document.createDocumentFragment();
-  
-  // Clear existing options
-  countrySelect.innerHTML = '';
-  
-  // Add default option
+/** Creates the default options in select comboboxes. Example "Select a Country...". */
+function createSelectDefaultOption(defaultTextContent) {
   const defaultOption = document.createElement('option');
   defaultOption.value = '';
-  defaultOption.textContent = 'Select a country...';
-  frag.append(defaultOption);
-  
-  // Add country options
-  countries.forEach(country => {
-    const option = document.createElement('option');
-    option.value = country.code;
-    option.textContent = country.name;
-    frag.append(option);
-  });
-  
-  countrySelect.append(frag);
-  // Enable the select
-  countrySelect.disabled = false;
+  defaultOption.textContent = defaultTextContent;
+  return defaultOption;
 }
+
+/** Populates a select dynamically based on a callback used for processing arrays, where the array is the source
+ * of the select population.
+ */
+function populateSelect(selectId, defaultText, array, callback) {
+  const selectElement = document.getElementById(selectId)
+  // DocumentFragment optimizes the DOM interaction when running append repeatedly 
+  let frag = document.createDocumentFragment();
+  selectElement.innerHTML = '';
+
+  frag.append(createSelectDefaultOption(defaultText));
+
+  callback(frag, array);
+
+  selectElement.append(frag);
+  // Enable the select
+  selectElement.disabled = false;
+}
+
+function populateCountrySelect(countries) {
+  populateSelect("country-select", 'Select a country...', countries,  (frag, countries) => { 
+    countries.forEach(country => {
+      const option = document.createElement('option');
+      option.value = country.code;
+      option.textContent = country.name;
+      frag.append(option);
+    });
+  });
+}
+
+// function populateCitySelect(cityNames) {
+//   populateSelect("city-select", 'Select a city...', cityNames,  (frag, cityNames) => { 
+//     cityNames.forEach(cityName => {
+//       const option = document.createElement('option');
+//       option.value = cityName;
+//       option.textContent = cityName;
+//       frag.append(option);
+//     });
+//   });
+// }
 
 function collapseSuggestionsWhenClickingOutsideTheSearchContainer(event) {
   // if there was no request sent then there are no suggestions to be shown nor hidden
@@ -356,6 +365,34 @@ document.getElementById("routing-button").addEventListener("click", async () => 
     manageAppExplanationParagraph.showErrorWhileGettingRoute();
   }
 });
+
+// document.getElementById("country-select").addEventListener("input", async (e) => {
+//   try {
+//     const countryCode = e.target.value.trim();
+//     let cityNames = cacheCitiesForCountry?.countryCode
+//     if (!cityNames) {
+//       const response = await geocodingRequestManager.fetchCities(countryCode);
+//       cacheCitiesForCountry = {countryCode: cityNames};
+//       cityNames = response.cityNames
+//     }
+//     populateCitySelect(cityNames)
+//   } catch (error) {
+//     console.error("Error when setting the city options.", error);
+//   }
+
+// });
+
+// document.getElementById("city-select").addEventListener("change", (e) => {
+//   // Allow users to type in the city select to filter options
+//   const query = e.target.value.toLowerCase();
+//   const options = e.target.querySelectorAll('option');
+  
+//   options.forEach(option => {
+//     if (option.value === "") return; // Keep the default option
+//     const city = option.textContent.toLowerCase();
+//     option.style.display = city.includes(query) ? 'block' : 'none';
+//   });
+// });
 
 document.getElementById("clear-route-button").addEventListener("click", () => mapManager.resetMap());
 

@@ -3,6 +3,8 @@ import { geocodeController } from "../controllers/geocodeController.js";
 import { optimizeController } from "../controllers/optimizeController.js";
 import { optimizeV2Controller } from "../controllers/optimizeV2Controller.js";
 import { attractionDetailsController } from "../controllers/attractionDetailsController.js";
+import { cityController, countryController } from "../controllers/countryCityController.js";
+import { geocodeFallbackController } from "../controllers/geocodingFallbackController.js";
 import { requireAuthentication } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -10,6 +12,13 @@ const router = express.Router();
 
 // Define the geocode route
 router.get("/geocode", requireAuthentication, geocodeController);
+
+// TODO add requireAuthentication
+router.get("/geocode-fallback", requireAuthentication, geocodeFallbackController);
+
+router.get("/countries", requireAuthentication, countryController);
+
+router.get("/cities", requireAuthentication, cityController);
 
 router.get("/optimize", requireAuthentication, optimizeController);
 

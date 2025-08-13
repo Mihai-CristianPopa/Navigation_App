@@ -908,9 +908,11 @@ input:focus {
   backdrop-filter: blur(4px);
   z-index: 2000;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   animation: fadeIn 0.2s ease-out;
+  padding: 20px 0; /* Add some padding */
+  overflow-y: auto; /* Allow scrolling if needed */
 }
 
 .confirmation-dialog {
@@ -922,6 +924,8 @@ input:focus {
   max-height: 90vh;
   overflow: hidden;
   animation: slideIn 0.2s ease-out;
+  margin: auto 0; /* Center vertically with space */
+  position: relative;
 }
 
 .dialog-header {
@@ -1059,8 +1063,7 @@ input:focus {
   font-size: 0.9rem;
 }
 
-.location-form .form-group select,
-.location-form .form-group input {
+.location-form .form-group select{
   padding: 0.75rem;
   border: 1px solid #ddd;
   border-radius: 6px;
@@ -1069,8 +1072,7 @@ input:focus {
   background: white;
 }
 
-.location-form .form-group select:focus,
-.location-form .form-group input:focus {
+.location-form .form-group select:focus{
   outline: none;
   border-color: #2196F3;
   box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
@@ -1086,8 +1088,7 @@ input:focus {
 
 /* Mobile responsive for location form */
 @media (max-width: 480px) {
-  .location-form .form-group select,
-  .location-form .form-group input {
-    font-size: 16px; /* Prevent zoom on iOS */
+  .location-form .form-group select{
+    font-size: 16px;
   }
 }
