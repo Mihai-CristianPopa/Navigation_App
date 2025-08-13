@@ -39,7 +39,7 @@ export const MESSAGES = {
     GET_ROUTE_ERROR: "There was an error when getting the route. Please try again later."
   },
   SUCCESS: {
-    DEFAULT_APP_EXPLANATION: "This application is used for routing you to the attractions you want to see.",
+    DEFAULT_APP_EXPLANATION: "Plan the fastest route to visit your chosen attractions, starting and ending at your selected point.",
     LOCATION_IS_STARTING_POINT: "Your current location is the starting point."
   },
   WARN: {
