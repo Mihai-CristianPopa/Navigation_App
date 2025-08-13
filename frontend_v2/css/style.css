@@ -58,10 +58,8 @@ input, button, textarea, select {
 }
 
 #app-explanation {
-  margin: 0;
   font-size: 0.9rem;
   color: #333;
-  line-height: 1.5;
 }
 
 /* Controls panel on the left */
@@ -76,19 +74,9 @@ input, button, textarea, select {
   gap: 1rem;
 }
 
-#location-status-container {
-  margin-bottom: 1rem;
-}
-
-#location-status-container.hidden {
-  display: none;
-}
-
 #location-status {
-  margin: 0;
   padding: 0.75rem;
   font-size: 0.85rem;
-  line-height: 1.4;
   border-radius: 6px;
   border: 1px solid #e0e0e0;
   background: rgba(248, 249, 250, 0.8);
@@ -165,7 +153,6 @@ form.search-attraction button:active {
   right: 0;
   z-index: 1001;
   list-style: none;
-  margin: 0;
   padding: 0;
   max-height: 250px;
   overflow-y: auto;
@@ -929,7 +916,6 @@ input:focus {
 }
 
 .dialog-header h4 {
-  margin: 0;
   font-size: 1.1rem;
   font-weight: 600;
   color: #333;
@@ -940,9 +926,7 @@ input:focus {
 }
 
 .dialog-body p {
-  margin: 0;
   font-size: 0.9rem;
-  line-height: 1.5;
   color: #555;
 }
 
