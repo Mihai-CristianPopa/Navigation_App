@@ -7,8 +7,9 @@ export default class MapManager {
    * @param {array} coordinates - [lat, lon] pairs where lat and lon are numbers
    * @param {number} zoom - Integer number, first set as 19
    * @param {string} zoomPosition - Options: "topleft", "topright", "bottomleft", "bottomright"
+   * @param {object} routeSummaryHandler - Used for handling the route summary paragraph
    */
-  constructor(mapContainerId, coordinates, zoom, zoomPosition) {
+  constructor(mapContainerId, coordinates, zoom, zoomPosition, routeSummaryHandler) {
     this._baseCoordinates = coordinates;
     this._locationRadius = 0;
     this._locationId = null;
@@ -20,6 +21,7 @@ export default class MapManager {
     this._userLocationFetched = false;
 
     this._dialogManager = new DialogManager();
+    this._routeSummaryHandler = routeSummaryHandler;
 
     this._map = this._initMap(mapContainerId);
     this._setupEventListeners();
@@ -210,6 +212,7 @@ export default class MapManager {
       this._updateMarkersWithRoutingOrder(initialIndex, finalIndex);
     });
     this._displayRoute(ownOptimizationResponse.geometry);
+    this._routeSummaryHandler.renderRouteLine(ownOptimizationResponse.stops, ownOptimizationResponse.timeDurationArray, ownOptimizationResponse.fastestRoute.totalDuration);
   }
 
   /**
@@ -273,6 +276,7 @@ export default class MapManager {
     if (this._routeLayer) {
       this._map.removeLayer(this._routeLayer);
       this._routeLayer = null;
+      this._routeSummaryHandler.clearRouteSummary();
     }
   }
 

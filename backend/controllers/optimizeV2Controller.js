@@ -70,16 +70,20 @@ export const optimizeV2Controller = async (req, res) => {
 
     if (fastestRoute.steps.length !== legs.length) throw new Error("The routing API called has fewer steps than needed for the number of attractions inputted");
     for (let i = 0; i <= fastestRoute.stepCount - 1; i++) {
-      fastestRoute.steps[i]["timeDuration"] = computeStrTimeFromSeconds(legs[i].duration);
+      fastestRoute.steps[i]["duration"] = computeStrTimeFromSeconds(legs[i].duration);
       fastestRoute.steps[i]["distance"] = computeKilometersFromMeters(fastestRoute.steps[i]["distance"]);
     }
-    fastestRoute.totalTimeDuration = computeStrTimeFromSeconds(totalTimeDurationInSeconds);
-    fastestRoute.totalDistance = computeKilometersFromMeters(fastestRoute.totalDistance)
-
+    fastestRoute.totalDuration = computeStrTimeFromSeconds(totalTimeDurationInSeconds);
+    fastestRoute.totalDistance = computeKilometersFromMeters(fastestRoute.totalDistance);
+    const finalIndicesArray = createAnArrayWithFinalWaypointIndices(fastestRoute);
+    const stops = finalIndicesArray.map(waypointIdx => waypointIdArray[waypointIdx]);
+    stops.push(waypointIdArray[0]);
+    
     return res.status(200).json({
       fastestRoute,
-      timeDurationArray: fastestRoute.steps.map(step => step.timeDuration),
-      finalIndicesArray: createAnArrayWithFinalWaypointIndices(fastestRoute),
+      timeDurationArray: fastestRoute.steps.map(step => step.duration),
+      finalIndicesArray,
+      stops,
       geometry
     });
     

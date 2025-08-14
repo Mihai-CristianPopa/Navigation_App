@@ -58,7 +58,7 @@ export default class AttractionManager {
     const listItems = this.container.querySelectorAll('li');
     return Array.from(listItems).map(li => ({
       id: li.dataset.id,
-      name: li.textContent,
+      name: li.dataset.name,
       lat: parseFloat(li.dataset.lat),
       lon: parseFloat(li.dataset.lon),
       element: li // Include DOM element reference

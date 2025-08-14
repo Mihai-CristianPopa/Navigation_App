@@ -52,20 +52,33 @@ p {
 }
 
 /* Message panel at the top */
-#message-panel {
+.message-area {
   top: 30px;
   left: 50%;
-  transform: translateX(-50%);
-  max-width: 600px;
+  transform: translateX(-45%);
+  max-width: 800px;
   text-align: center;
   border-left: 4px solid #2196F3;
   font-size: 0.9rem;
   color: #333;
 }
 
-#message-panel.hidden {
+.message-pannel.hidden {
   display: none;
 }
+
+.route-line { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+.stop {
+  padding: .25rem .6rem; border: 1px solid #e5e7eb; border-radius: 9999px;
+  font: 500 14px/1.1 system-ui, sans-serif; white-space: nowrap; background: #fff;
+}
+.leg { display: flex; align-items: center; gap: .35rem; }
+.leg::before { content: "→"; font-size: 16px; line-height: 1; }
+.leg-time {
+  font: 12px/1.1 system-ui, sans-serif; padding: .15rem .4rem; border-radius: 6px;
+  background: #f3f4f6; border: 1px solid #e5e7eb; white-space: nowrap;
+}
+.route-total { margin-top: 8px; font: 600 13px/1.2 system-ui, sans-serif; opacity: .8; }
 
 /* Controls panel on the left */
 #controls-panel {
@@ -579,7 +592,7 @@ input:focus {
     max-width: calc(100vw - 20px);
   }
   
-  #message-panel {
+  .message-area {
     top: 10px;
     left: 10px;
     right: 10px;
@@ -868,7 +881,7 @@ input:focus {
     text-align: center;
   }
   
-  .authenticated #message-panel {
+  .authenticated .message-area {
     top: 120px;
   }
 }

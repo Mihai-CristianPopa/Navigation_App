@@ -133,7 +133,13 @@
         </div>
         
         <!-- Floating message panel at the top -->
-        <p id="message-panel" class="floating-panel" hidden></p>
+        <p id="message-panel" class="floating-panel message-area" hidden></p>
+
+        <!-- Route panel, shown after clicking on Get Route, hidden after calling reset map -->
+        <div id="route-panel" class="floating-panel message-area" hidden>
+            <div class="route-line" id="routeLine"></div>
+            <div class="route-total" id="routeTotal"></div>
+        </div>
         
         <!-- Floating controls panel -->
         <div id="used-for-hiding-controls-panel" hidden>

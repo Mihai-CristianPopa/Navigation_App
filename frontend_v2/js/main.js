@@ -5,13 +5,14 @@ import AuthUI from "./authUI.js";
 import ServiceUri from "./serviceUri.js";
 import MapManager from "./mapManager.js";
 import { EVENTS } from "./constants.js";
+import RouteSummaryHandler from "./routeSummaryHandler.js";
 
 const manageSelectedAttractions = new AttractionManager(document.getElementById("attractions-items"));
 const manageTextAreas = new MessageManager(document.getElementById("message-panel"), document.getElementById("location-status"));
 const authUI = new AuthUI(manageTextAreas);
 const geocodingRequestManager = new ServiceUri();
-const mapManager = new MapManager("map", [44.435423, 26.102287], 19, "bottomright");
-
+const routeSummaryHandler = new RouteSummaryHandler(document.getElementById("route-panel"));
+const mapManager = new MapManager("map", [44.435423, 26.102287], 19, "bottomright", routeSummaryHandler);
 
 let lastSearchResponse = null;
 let lastQuery = null;
@@ -343,7 +344,8 @@ document.getElementById("routing-button").addEventListener("click", async () => 
   try {
     // const mapBoxOptimizeResponse = await geocodingRequestManager.fetchTSPRouting(manageSelectedAttractions.coordinatesString);
     const ownOptimizationResponse = await geocodingRequestManager.fetchOwnTspRouting(manageSelectedAttractions.waypointIds, manageSelectedAttractions.coordinatesString);
-    manageTextAreas.showDefaultAppSuccessMessage();
+    // manageTextAreas.showDefaultAppSuccessMessage();
+    manageTextAreas.hideMessagePanel();
     // mapManager.showRouteWithNumberedMarkers(mapBoxOptimizeResponse.waypoints, mapBoxOptimizeResponse.trips[0].geometry);
     mapManager.showRouteWithNumberedMarkersV2(ownOptimizationResponse);
   } catch (error) {
@@ -351,35 +353,10 @@ document.getElementById("routing-button").addEventListener("click", async () => 
   }
 });
 
-// document.getElementById("country-select").addEventListener("input", async (e) => {
-//   try {
-//     const countryCode = e.target.value.trim();
-//     let cityNames = cacheCitiesForCountry?.countryCode
-//     if (!cityNames) {
-//       const response = await geocodingRequestManager.fetchCities(countryCode);
-//       cacheCitiesForCountry = {countryCode: cityNames};
-//       cityNames = response.cityNames
-//     }
-//     populateCitySelect(cityNames)
-//   } catch (error) {
-//     console.error("Error when setting the city options.", error);
-//   }
-
-// });
-
-// document.getElementById("city-select").addEventListener("change", (e) => {
-//   // Allow users to type in the city select to filter options
-//   const query = e.target.value.toLowerCase();
-//   const options = e.target.querySelectorAll('option');
-  
-//   options.forEach(option => {
-//     if (option.value === "") return; // Keep the default option
-//     const city = option.textContent.toLowerCase();
-//     option.style.display = city.includes(query) ? 'block' : 'none';
-//   });
-// });
-
-document.getElementById("clear-route-button").addEventListener("click", () => mapManager.resetMap());
+document.getElementById("clear-route-button").addEventListener("click", () => {
+  mapManager.resetMap();
+  manageTextAreas.showDefaultAppSuccessMessage();
+});
 
 // Replaced the button and input events with the form submit event
 document.getElementById("search-attraction-form").addEventListener("submit", (e) => {
