@@ -77,7 +77,7 @@ export const attractionDetailsController = async (req, res) => {
   }
 };
 
-async function fetchWikidataBatch(qids) {
+export async function fetchWikidataBatch(qids) {
   const values = qids.map(q => `wd:${q}`).join(" ");
   const query = `
     SELECT ?item ?itemLabel ?itemDescription ?image WHERE {

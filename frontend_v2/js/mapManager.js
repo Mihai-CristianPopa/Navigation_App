@@ -177,8 +177,9 @@ export default class MapManager {
 
   _updatePopupMarkerContent(marker, text) {
     marker = this._getMarkerReference(marker);
-    const popupId = marker?.attachedPopup?.id;
-    document.getElementById(popupId).textContent = text;
+    marker.setPopupContent(marker.attachedPopup.getContent().replace(marker.popupTitle, text));
+    marker.popupTitle = text;
+    // document.getElementById(popupId).textContent = text;
     // marker.setPopupContent(this._getPopupMarkerContent(text));
   }
 
@@ -191,7 +192,7 @@ export default class MapManager {
   //   return `<strong>${popupContent}</strong>`;
   // }
 
-  _getPopupMarkerContent(name, attractionDetails = {}, popupId = null) {
+  _getPopupMarkerContent(name, attractionDetails = {}) {
   // Handle case where attractionDetails might be null or undefined
   const {
     osmWebsite,
@@ -254,7 +255,7 @@ export default class MapManager {
 
   return `
     <div class="popup-content">
-      <div id="${popupId}" class="popup-title">
+      <div class="popup-title">
         <strong>${this._escape(name)}</strong>
       </div>
       ${contentSections.join('')}
@@ -405,16 +406,16 @@ export default class MapManager {
 }
 
   _addPopupMarker(id, coordinates, searchQuery, fullAttractionName, attractionDetails=null) {
-    const popupId = `${fullAttractionName}-${new Date().getTime()}`;
     const newPopup = L.popup({
       className: "popup",
-      content: this._getPopupMarkerContent(fullAttractionName, attractionDetails, popupId)
+      content: this._getPopupMarkerContent(fullAttractionName, attractionDetails)
     });
-    newPopup.id = popupId;
+    // newPopup.id = popupId;
     const newMarker = L.marker(coordinates, {
       title: fullAttractionName
     }).addTo(this._map).bindPopup(newPopup);
     newMarker.attachedPopup = newPopup;
+    newMarker.popupTitle = fullAttractionName;
     this._storeMarker(this._popupMarkers, id, newMarker, searchQuery, fullAttractionName);
   };
 
