@@ -101,6 +101,12 @@ export const ERROR_OBJECTS = {
         message: loginErrorMessageWrongPassword(email)
       };
     },
+    NO_DATA_FOUND: (osmId, osmType) =>  { 
+        return {
+          statusCode: 404,
+          message: `No data found for the extra details request with the osm_id: ${osmId} and osm_type: ${osmType}.`,
+        }
+    },
     MISSING_API_KEY: (apiKeyUsage) => {
         return {
           statusCode: 500,

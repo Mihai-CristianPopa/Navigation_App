@@ -1,6 +1,5 @@
 import { EVENTS } from "./constants.js";
 
-
 export default class ServiceUri {
   constructor() {
     this._backendOrigin = null;
@@ -144,6 +143,31 @@ export default class ServiceUri {
     }
   
     return response.json();
+  }
+
+  getExtraAttractionDetailsRequestParams(object) {
+    const {osmId, osmType, wikidataId} = object;
+    if (osmId && osmType) return {osmId, osmType};
+    if (wikidataId) return {wikidataId};
+    throw new Error("No parameters found for extracting extra details.");
+  }
+
+  /** This function is called with either the OSM data from LocationIq or wikidata from Mapbox */
+  async fetchExtraAttractionDetails(object) {
+    try {
+      const url = `${this._backendOrigin}/api/extra-details`;
+      const response = await this._fetchWithCredentials(this._buildUriWithParams(url, this.getExtraAttractionDetailsRequestParams(object)));
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+    
+      return response.json();
+    } catch(error) {
+      console.error("Extra details could not be fetched right now.", error);
+    }
+    
+
   }
 
 };

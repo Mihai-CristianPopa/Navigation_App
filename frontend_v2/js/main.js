@@ -81,13 +81,17 @@ function processGeocodingSearchResults(items) {
 
     // DocumentFragment optimizes the DOM interaction when running append repeatedly 
     const frag = document.createDocumentFragment();
-
-    items.forEach(({ type, display_name, lat, lon, place_id }) => {
+    // When this request is sent for the LocationIq we are retrieving osm_id and osm_type
+    // And when the geocoding goes through mapbox we get back the wikidata_id
+    items.forEach(({ type, display_name, lat, lon, place_id, osm_id, osm_type, wikidata_id }) => {
       const li = document.createElement("li");
       li.textContent = `${type}: ${display_name}`;
       li.dataset.lat = lat;
       li.dataset.lon = lon;
       li.dataset.id = place_id;
+      li.dataset.osmId = osm_id;
+      li.dataset.osmType = osm_type;
+      li.dataset.wikidataId = wikidata_id;
       frag.append(li);
     });
 
@@ -126,7 +130,7 @@ async function performSearch() {
  * The attraction he wants to see is and a new request to get suggestions is made to a different provider while passing
  * Also the country code. If the user clicks None of the above a second time, that is still pending to be implemented.
  */
-function processSelectedSuggestion(event) {
+async function processSelectedSuggestion(event) {
   const li = event.target.closest("li");
   if (!li) return;
 
@@ -149,6 +153,12 @@ function processSelectedSuggestion(event) {
 
     clearSuggestions();
 
+    const attractionDetails = await geocodingRequestManager.fetchExtraAttractionDetails({
+      osmId: li.dataset.osmId,
+      osmType: li.dataset.osmType,
+      wikidataId: li.dataset.wikidataId
+    });
+
     const selectedAttraction = {
         id: li.dataset.id,
         name: lastQuery,
@@ -159,6 +169,7 @@ function processSelectedSuggestion(event) {
     manageSelectedAttractions.addAttractionToContainer(selectedAttraction);
 
     mapManager.addNewlySelectedAttractionMarkers(li.dataset.id, [lat, lon], lastQuery, name);
+    // mapManager.addNewlySelectedAttractionMarkers(li.dataset.id, [lat, lon], lastQuery, name, attractionDetails);
   }
 }
 
@@ -305,17 +316,6 @@ function populateCountrySelect(countries) {
     });
   });
 }
-
-// function populateCitySelect(cityNames) {
-//   populateSelect("city-select", 'Select a city...', cityNames,  (frag, cityNames) => { 
-//     cityNames.forEach(cityName => {
-//       const option = document.createElement('option');
-//       option.value = cityName;
-//       option.textContent = cityName;
-//       frag.append(option);
-//     });
-//   });
-// }
 
 function collapseSuggestionsWhenClickingOutsideTheSearchContainer(event) {
   // if there was no request sent then there are no suggestions to be shown nor hidden
