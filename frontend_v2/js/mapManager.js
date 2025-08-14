@@ -177,7 +177,9 @@ export default class MapManager {
 
   _updatePopupMarkerContent(marker, text) {
     marker = this._getMarkerReference(marker);
-    marker.setPopupContent(this._getPopupMarkerContent(text));
+    const popupId = marker?.attachedPopup?.id;
+    document.getElementById(popupId).textContent = text;
+    // marker.setPopupContent(this._getPopupMarkerContent(text));
   }
 
   _updatePermanentLabelMarketIcon(marker, withOrder, text) {
@@ -185,35 +187,80 @@ export default class MapManager {
     marker.setIcon(this._getPermanentLabelMarkerIcon(withOrder, text));
   }
 
-  _getPopupMarkerContent(popupContent) {
-    return `<strong>${popupContent}</strong>`;
-  }
+  // _getPopupMarkerContent(popupContent) {
+  //   return `<strong>${popupContent}</strong>`;
+  // }
 
-  _getPopupMarkerContent(name, attractionDetails) {
-    const {
-      osmWebsite,
-      openingHours,
-      phone,
-      email,
-      osmImage
-    } = attractionDetails;
+  _getPopupMarkerContent(name, attractionDetails = {}, popupId = null) {
+  // Handle case where attractionDetails might be null or undefined
+  const {
+    osmWebsite,
+    openingHours,
+    phone,
+    email,
+    osmImage
+  } = attractionDetails || {};
 
-    const lines = [];
-    if (openingHours) lines.push(`<div><strong>Hours:</strong> ${this._escape(openingHours)}</div>`);
-    if (phone)         lines.push(`<div><strong>Phone:</strong> ${this._escape(phone)}</div>`);
-    if (email)         lines.push(`<div><strong>Email:</strong> ${this._escape(email)}</div>`);
-    if (osmWebsite)       lines.push(
-      `<div><a href="${osmWebsite}" target="_blank" rel="noopener noreferrer">Official website</a></div>`
+  // Build content sections
+  const contentSections = [];
+  
+  // Add image section if available
+  if (osmImage) {
+    contentSections.push(
+      `<div class="popup-image">
+        <img src="${this._escape(osmImage)}" alt="${this._escape(name)}" loading="lazy" />
+      </div>`
     );
-
-    return `
-      <div class="popup">
-        <div class="popup-title"><strong>${this._escape(name)}</strong></div>
-        ${osmImage ? `<img class="popup-img" src="${osmImage}" alt="${this._escape(name)}"/>` : ''}
-        ${lines.join('') || '<div><em>No extra info available</em></div>'}
-      </div>
-    `;
   }
+
+  // Add details section
+  const details = [];
+  if (openingHours) {
+    details.push(`<div class="popup-detail">
+      <i class="fa fa-clock-o"></i>
+      <span><strong>Hours:</strong> ${this._escape(openingHours)}</span>
+    </div>`);
+  }
+  
+  if (phone) {
+    details.push(`<div class="popup-detail">
+      <i class="fa fa-phone"></i>
+      <span><strong>Phone:</strong> <a href="tel:${this._escape(phone)}">${this._escape(phone)}</a></span>
+    </div>`);
+  }
+  
+  if (email) {
+    details.push(`<div class="popup-detail">
+      <i class="fa fa-envelope"></i>
+      <span><strong>Email:</strong> <a href="mailto:${this._escape(email)}">${this._escape(email)}</a></span>
+    </div>`);
+  }
+  
+  if (osmWebsite) {
+    details.push(`<div class="popup-detail">
+      <i class="fa fa-external-link"></i>
+      <span><a href="${this._escape(osmWebsite)}" target="_blank" rel="noopener noreferrer">Official Website</a></span>
+    </div>`);
+  }
+
+  // Add details section if we have any details
+  if (details.length > 0) {
+    contentSections.push(`<div class="popup-details">${details.join('')}</div>`);
+  } else {
+    contentSections.push(`<div class="popup-no-details">
+      <em>No additional information available</em>
+    </div>`);
+  }
+
+  return `
+    <div class="popup-content">
+      <div id="${popupId}" class="popup-title">
+        <strong>${this._escape(name)}</strong>
+      </div>
+      ${contentSections.join('')}
+    </div>
+  `;
+}
 
   _getPermanentLabelMarkerIcon(addRouteLabel, text) {
     let className = "marker-label";
@@ -358,10 +405,17 @@ export default class MapManager {
 }
 
   _addPopupMarker(id, coordinates, searchQuery, fullAttractionName, attractionDetails=null) {
+    const popupId = `${fullAttractionName}-${new Date().getTime()}`;
+    const newPopup = L.popup({
+      className: "popup",
+      content: this._getPopupMarkerContent(fullAttractionName, attractionDetails, popupId)
+    });
+    newPopup.id = popupId;
     const newMarker = L.marker(coordinates, {
       title: fullAttractionName
-    }).addTo(this._map).bindPopup(this._getPopupMarkerContent(fullAttractionName, attractionDetails));
-    this._storeMarker(this._popupMarkers, id, newMarker, searchQuery, fullAttractionName, attractionDetails);
+    }).addTo(this._map).bindPopup(newPopup);
+    newMarker.attachedPopup = newPopup;
+    this._storeMarker(this._popupMarkers, id, newMarker, searchQuery, fullAttractionName);
   };
 
   _removeMarkerFromMap(marker) {
@@ -374,14 +428,13 @@ export default class MapManager {
     }
   }
 
-  _storeMarker(array, id, markerReference, searchQuery, fullAttractionName, attractionDetails=null) {
+  _storeMarker(array, id, markerReference, searchQuery, fullAttractionName) {
     // Object shorthand - property names match variable names
     array.push({
       id,
       markerReference,
       searchQuery,
-      fullAttractionName,
-      attractionDetails
+      fullAttractionName
     });
   }
 
