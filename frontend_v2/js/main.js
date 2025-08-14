@@ -168,8 +168,7 @@ async function processSelectedSuggestion(event) {
     };
     manageSelectedAttractions.addAttractionToContainer(selectedAttraction);
 
-    mapManager.addNewlySelectedAttractionMarkers(li.dataset.id, [lat, lon], lastQuery, name);
-    // mapManager.addNewlySelectedAttractionMarkers(li.dataset.id, [lat, lon], lastQuery, name, attractionDetails);
+    mapManager.addNewlySelectedAttractionMarkers(li.dataset.id, [lat, lon], lastQuery, name, attractionDetails);
   }
 }
 
