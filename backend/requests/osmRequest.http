@@ -2,6 +2,7 @@
 @baseUrl = http://localhost:3000
 @osm_id = 217851530
 @osm_type = way
+@wikidata_id = Q539324
 
 
 ### Successful login
@@ -17,6 +18,11 @@ content-type: application/json
 ###
 @fullCookie = {{login.response.headers.set-cookie}}
 
-### 2. Successful Get suggestions request
-GET {{baseUrl}}/api/extra-details?osmId={{osm_id}}&osmType={{osm_type}}
+### 2. Successful Get extra details with osm parameters
+GET {{baseUrl}}/api/extra-details?osmId={{osm_id}}&osmType={{osm_type}} HTTP/1.1
+Cookie: {{fullCookie}}
+
+### 3. Successful Get extra details with wikidataId
+
+GET {{baseUrl}}/api/extra-details?wikidataId={{wikidata_id}} HTTP/1.1
 Cookie: {{fullCookie}}

@@ -3,6 +3,7 @@
 @triumphalArchBucharestLon = 26.078127050916656
 @ColosseumLat = 41.8902572
 @ColosseumLon = 12.49238408348642
+@wikidata_id = Q539324
 # Successful request
 # @name login
 POST {{baseUrl}}/authentication/login HTTP/1.1
@@ -18,12 +19,17 @@ content-type: application/json
 
 ### 3. Get attraction details - Triumphal Arch
 
-GET {{baseUrl}}/api/attraction-details?lat={{triumphalArchBucharestLat}}&lon={{triumphalArchBucharestLon}} HTTP/1.1
-Cookie: {{fullCookie}}
+# GET {{baseUrl}}/api/attraction-details?lat={{triumphalArchBucharestLat}}&lon={{triumphalArchBucharestLon}} HTTP/1.1
+# Cookie: {{fullCookie}}
 
-### 4. Get attraction details - Collosseum Rome
+# ### 4. Get attraction details - Collosseum Rome
 
-GET {{baseUrl}}/api/attraction-details?lat={{ColosseumLat}}&lon={{ColosseumLon}} HTTP/1.1
+# GET {{baseUrl}}/api/attraction-details?lat={{ColosseumLat}}&lon={{ColosseumLon}} HTTP/1.1
+# Cookie: {{fullCookie}}
+
+# ### 4. Get attraction details - Collosseum Rome
+
+GET {{baseUrl}}/api/attraction-details?wikidataId={{wikidata_id}} HTTP/1.1
 Cookie: {{fullCookie}}
 
 ### 5. Use session for logout

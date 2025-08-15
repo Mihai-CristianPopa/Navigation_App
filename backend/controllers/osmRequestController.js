@@ -2,7 +2,7 @@ import logger from "../logger.js";
 import { errorObj, infoLog } from "../loggerHelper.js";
 import { ERROR_OBJECTS, INFO_MESSAGE, LIMIT, EXTERNAL_APIS } from "../utils/constants.js";
 import { getExtraAttractionDetails, insertExtraAttractionDetails } from "../services/extraDetailsService.js";
-import { fetchWikidataBatch } from "../controllers/attractionDetailsController.js";
+// import { fetchWikidataBatch } from "../controllers/attractionDetailsController.js";
 import axios from "axios";
 
 export const osmRequestController = async (req, res) => {
@@ -39,7 +39,7 @@ export const osmRequestController = async (req, res) => {
       phone,
       email,
       osmImage: wikiDataImage,
-      wikiDataId,
+      wikidataId: wikiDataId,
       created_at: new Date(),
       date: new Date().toISOString().split('T')[0]
     }
@@ -58,7 +58,7 @@ export const osmRequestController = async (req, res) => {
     return 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(file);
   }
 
-  async function cacheOsmResult(result) {
+  async function cacheSearchResult(result) {
     try {
       await insertExtraAttractionDetails(result);
     } catch (error) {
@@ -66,9 +66,9 @@ export const osmRequestController = async (req, res) => {
     }
   }
 
-  async function checkTheCache(osmId, osmType) {
+  async function checkTheCache(searchObject) {
     try {
-      const cachedResult = await getExtraAttractionDetails(osmId, osmType);
+      const cachedResult = await getExtraAttractionDetails(searchObject);
       return cachedResult;
     } catch (error) {
       logger.error("Cache not available for attraction.", errorObj(req, startTime, error));
@@ -76,16 +76,8 @@ export const osmRequestController = async (req, res) => {
     return null;
   }
 
-  try {
-    const {osmId, osmType, wikidataId} = req.query;
-
-    if (!((osmId && osmType) || wikidataId)) {
-      const err = ERROR_OBJECTS.BAD_REQUEST("osmId,osmType/waypointId");
-      logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
-      return res.status(err.statusCode).json(err);
-    }
-
-    const cacheResult = await checkTheCache(osmId, osmType);
+  async function fetchDetailsStartingFromOsm(osmId, osmType) {
+    const cacheResult = await checkTheCache({ osmId, osmType });
     if (cacheResult) {
       infoLog(req, startTime, "Successfully fetched extra details from the cache.");
       return res.status(200).json(cacheResult);
@@ -108,8 +100,82 @@ export const osmRequestController = async (req, res) => {
 
     const result = await extractDataFromTags(tags, osmId, osmType);
     res.status(200).json(result);
-    cacheOsmResult(result);
+    cacheSearchResult(result);
     infoLog(req, startTime, "Successfully fetched extra details.");
+  }
+
+  async function fetchDetailsStartingFromWikidata(wikidataId) {
+    const cacheResult = await checkTheCache({ wikidataId });
+    if (cacheResult) {
+      infoLog(req, startTime, "Successfully fetched extra details from the cache.");
+      return res.status(200).json(cacheResult);
+    }
+
+    const wikidataResults = await fetchWikidataBatch([wikidataId]);
+    const wikidataSearchResult = wikidataResults[wikidataId];
+    const wikiDataImage = normalizeImage(wikidataSearchResult?.imageUrl || null);
+
+    const result = {
+      wikidataId,
+      osmImage: wikiDataImage,
+      osmWebsite: wikidataSearchResult?.officialWebsite || null,
+      name: wikidataSearchResult?.label || null,
+      description: wikidataSearchResult?.description || null,
+      created_at: new Date(),
+      date: new Date().toISOString().split('T')[0]
+    }
+
+    res.status(200).json(result);
+    cacheSearchResult(result);
+    infoLog(req, startTime, "Successfully fetched extra details.");
+  }
+
+  async function fetchWikidataBatch(qids) {
+    const values = qids.map(q => `wd:${q}`).join(" ");
+    const query = `
+      SELECT ?item ?itemLabel ?itemDescription ?image ?official_website WHERE {
+        VALUES ?item { ${values} }
+        OPTIONAL { ?item wdt:P18 ?image. }
+        OPTIONAL { ?item wdt:P856 ?official_website. }
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+      }
+    `;
+    const url = 'https://query.wikidata.org/sparql?format=json&query=' +
+                encodeURIComponent(query);
+  
+    const res = await axios.get(url, {
+      headers: {
+        'Accept': 'application/sparql-results+json',
+        'User-Agent': UA
+      }
+    });
+    const json = res.data;
+    // transform results into a map { Qid: {label,desc,image} }
+    const map = {};
+    json.results.bindings.forEach(b => {
+      const q = b.item.value.split('/').pop(); 
+      map[q] = {
+        label:       b.itemLabel.value,
+        description: b.itemDescription?.value || '',
+        imageUrl:    b.image?.value || null,
+        officialWebsite: b.official_website?.value || null
+      };
+    });
+    return map;
+  }
+
+  try {
+    const {osmId, osmType, wikidataId} = req.query;
+
+    if (!((osmId && osmType) || wikidataId)) {
+      const err = ERROR_OBJECTS.BAD_REQUEST("osmId,osmType/waypointId");
+      logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+      return res.status(err.statusCode).json(err);
+    }
+
+    if (osmId && osmType) return fetchDetailsStartingFromOsm(osmId, osmType);
+
+    if (wikidataId) return fetchDetailsStartingFromWikidata(wikidataId);
   } catch (error) {
     logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, error));
     res.status(500).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);

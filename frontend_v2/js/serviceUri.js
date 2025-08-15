@@ -147,8 +147,8 @@ export default class ServiceUri {
 
   getExtraAttractionDetailsRequestParams(object) {
     const {osmId, osmType, wikidataId} = object;
-    if (osmId && osmType) return {osmId, osmType};
-    if (wikidataId) return {wikidataId};
+    if (osmId !== "undefined" && osmType !== "undefined") return { osmId, osmType };
+    if (wikidataId !== "undefined") return { wikidataId };
     throw new Error("No parameters found for extracting extra details.");
   }
 

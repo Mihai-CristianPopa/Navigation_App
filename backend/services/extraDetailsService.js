@@ -7,9 +7,12 @@ export async function insertExtraAttractionDetails(detailsObject) {
   return await collection.insertOne(detailsObject);
 }
 
-/** Used for checking whether there is an existent cache for the attraction */
-export async function getExtraAttractionDetails(osmId, osmType) {
+/** Used for checking whether there is an existent cache for the attraction
+ * Can be used either to search by osmId and osmType or by wikidataId.
+ */
+
+export async function getExtraAttractionDetails(searchObject) {
   const db = client.db("geocoding_results");
   const collection = db.collection("attractions_extra_details");
-  return await collection.findOne({ osmId, osmType });
+  return await collection.findOne(searchObject);
 }

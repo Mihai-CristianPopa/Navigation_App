@@ -353,7 +353,8 @@ document.getElementById("routing-button").addEventListener("click", async () => 
 });
 
 document.getElementById("clear-route-button").addEventListener("click", () => {
-  mapManager.resetMap();
+  // mapManager.resetMap();
+  clearUserState();
   manageTextAreas.showDefaultAppSuccessMessage();
 });
 
@@ -363,7 +364,7 @@ document.getElementById("search-attraction-form").addEventListener("submit", (e)
   performSearch();
 });
 
-document.addEventListener(EVENTS.REMOVE_ATTRACTIONS, () => manageSelectedAttractions.removeAllAttractions());
+// document.addEventListener(EVENTS.REMOVE_ATTRACTIONS, () => manageSelectedAttractions.removeAllAttractions());
 
 document.addEventListener(EVENTS.USER_LOCATION_FOUND, (e) => {
   manageSelectedAttractions.addAttractionToContainer(e.detail);

@@ -380,7 +380,7 @@ export default class MapManager {
     this._removeMarkersFromMap(this._popupMarkers);
     this._removeMarkersFromMap(this._permanentLabelMarkers);
     
-    document.dispatchEvent(new CustomEvent(EVENTS.REMOVE_ATTRACTIONS));
+    // document.dispatchEvent(new CustomEvent(EVENTS.REMOVE_ATTRACTIONS));
 
     this._popupMarkers = [];
     this._permanentLabelMarkers = [];
