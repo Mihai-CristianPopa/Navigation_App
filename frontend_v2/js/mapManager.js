@@ -188,9 +188,9 @@ export default class MapManager {
     marker.setIcon(this._getPermanentLabelMarkerIcon(withOrder, text));
   }
 
-  // _getPopupMarkerContent(popupContent) {
-  //   return `<strong>${popupContent}</strong>`;
-  // }
+  _getPopupMarkerContentCurrentLocation(popupContent) {
+    return `<strong>${popupContent}</strong>`;
+  }
 
   _getPopupMarkerContent(name, attractionDetails = {}) {
   // Handle case where attractionDetails might be null or undefined
@@ -405,19 +405,19 @@ export default class MapManager {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
-  _addPopupMarker(id, coordinates, searchQuery, fullAttractionName, attractionDetails=null) {
-    const newPopup = L.popup({
-      className: "popup",
-      content: this._getPopupMarkerContent(fullAttractionName, attractionDetails)
-    });
-    // newPopup.id = popupId;
-    const newMarker = L.marker(coordinates, {
-      title: fullAttractionName
-    }).addTo(this._map).bindPopup(newPopup);
-    newMarker.attachedPopup = newPopup;
-    newMarker.popupTitle = fullAttractionName;
-    this._storeMarker(this._popupMarkers, id, newMarker, searchQuery, fullAttractionName);
-  };
+_addPopupMarker(id, coordinates, searchQuery, fullAttractionName, attractionDetails=null) {
+  const newPopup = L.popup({
+    className: "popup",
+    content: id !== this._locationId ? this._getPopupMarkerContent(fullAttractionName, attractionDetails) : this._getPopupMarkerContentCurrentLocation(fullAttractionName)
+  });
+  // newPopup.id = popupId;
+  const newMarker = L.marker(coordinates, {
+    title: fullAttractionName
+  }).addTo(this._map).bindPopup(newPopup);
+  newMarker.attachedPopup = newPopup;
+  newMarker.popupTitle = fullAttractionName;
+  this._storeMarker(this._popupMarkers, id, newMarker, searchQuery, fullAttractionName);
+};
 
   _removeMarkerFromMap(marker) {
     this._map.removeLayer(marker.markerReference);

@@ -147,7 +147,8 @@ export const osmRequestController = async (req, res) => {
       headers: {
         'Accept': 'application/sparql-results+json',
         'User-Agent': UA
-      }
+      },
+      timeout: 15_000
     });
     const json = res.data;
     // transform results into a map { Qid: {label,desc,image} }
