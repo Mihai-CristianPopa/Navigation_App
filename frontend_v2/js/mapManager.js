@@ -283,7 +283,7 @@ export default class MapManager {
    * @param {Object} ownOptimizationResponse - object containing the finalIndicesArray
    */
   showRouteWithNumberedMarkersV2(ownOptimizationResponse) {
-    ownOptimizationResponse.finalIndicesArray.forEach((finalIndex, initialIndex) => {
+    ownOptimizationResponse.finalIndicesArray.forEach((initialIndex, finalIndex) => {
       this._updateMarkersWithRoutingOrder(initialIndex, finalIndex);
     });
     this._displayRoute(ownOptimizationResponse.geometry);

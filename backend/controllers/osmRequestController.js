@@ -39,7 +39,9 @@ export const osmRequestController = async (req, res) => {
       phone,
       email,
       osmImage: wikiDataImage,
-      wikiDataId
+      wikiDataId,
+      created_at: new Date(),
+      date: new Date().toISOString().split('T')[0]
     }
 
   }
@@ -83,11 +85,11 @@ export const osmRequestController = async (req, res) => {
       return res.status(err.statusCode).json(err);
     }
 
-    // const cacheResult = await checkTheCache(osmId, osmType);
-    // if (cacheResult) {
-    //   infoLog(req, startTime, "Successfully fetched extra details from the cache.");
-    //   return res.status(200).json(cacheResult);
-    // }
+    const cacheResult = await checkTheCache(osmId, osmType);
+    if (cacheResult) {
+      infoLog(req, startTime, "Successfully fetched extra details from the cache.");
+      return res.status(200).json(cacheResult);
+    }
 
     const overpassQL = `[out:json][timeout:25];(${osmType}(${osmId}););out tags center;`;
     const overpassResp = await axios.get(OVERPASS_URL, {
