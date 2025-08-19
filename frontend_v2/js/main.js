@@ -18,8 +18,8 @@ let lastSearchResponse = null;
 let lastQuery = null;
 let hasSuggestions = false;
 let countriesCache = null;
-const searchedQueries = [];
-const queriesForWhichFallbackSuggestionWasRequested = [];
+let searchedQueries = [];
+let queriesForWhichFallbackSuggestionWasRequested = [];
 
 const searchInput = document.getElementById("search-input");
 const suggestionList = document.getElementById("suggestions");
