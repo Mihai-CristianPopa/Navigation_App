@@ -71,7 +71,11 @@ class AuthService {
       if (response.ok && userAuthenticated === true) {
         responseObject.ok = true;
       }
-      
+
+      if (response.ok && userAuthenticated === false) {
+        responseObject.message = "Login failed. If using Safari, please try again from a different browser.";
+      }
+
       return responseObject;
     } catch (error) {
       console.error("Login error: ", error);
