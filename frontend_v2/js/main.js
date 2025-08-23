@@ -185,18 +185,17 @@ async function showLocationSelectionDialog() {
     try {
       const countries = await loadCountries();
       populateCountrySelect(countries);
-
-      countrySelect.value = "";
-      // cityInput.value = "";
-      overlay.hidden = false;
-      setTimeout(() => countrySelect.focus(), 100);
-
     } catch (error) {
       console.error('Failed to load countries for dialog:', error);
       manageTextAreas.showCountrySelectionDialogErrorMessage();
       clearSearchQuery();
       return;
     }
+  } else {
+    countrySelect.value = "";
+    // cityInput.value = "";
+    overlay.hidden = false;
+    setTimeout(() => countrySelect.focus(), 100);
   }
 }
 
