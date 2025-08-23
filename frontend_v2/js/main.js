@@ -271,7 +271,7 @@ async function handleStructuredSearch() {
     // Perform the structured search request
     lastSearchResponse = await geocodingRequestManager.fetchSuggestionsFallback(lastQuery, countryCode);
     const items = lastSearchResponse.options;
-    if (!items.length) return manageTextAreas.showNoSuggestionsFoundErrorMessage(lastQuery);
+    if (!items.length) return manageTextAreas.showNoSuggestionMatch(lastQuery);;
     queriesForWhichFallbackSuggestionWasRequested.push(lastQuery);
     processGeocodingSearchResults(items);
   } catch (error) {
