@@ -191,12 +191,11 @@ async function showLocationSelectionDialog() {
       clearSearchQuery();
       return;
     }
-  } else {
-    countrySelect.value = "";
-    // cityInput.value = "";
-    overlay.hidden = false;
-    setTimeout(() => countrySelect.focus(), 100);
   }
+  countrySelect.value = "";
+  // cityInput.value = "";
+  overlay.hidden = false;
+  setTimeout(() => countrySelect.focus(), 100);
 }
 
 /** Load contries from the session storage. */
