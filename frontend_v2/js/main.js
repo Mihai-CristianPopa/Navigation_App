@@ -119,7 +119,7 @@ async function performSearch() {
     lastSearchResponse = await geocodingRequestManager.fetchSuggestions(lastQuery);
     searchedQueries.push(currentQuery);
     const items = lastSearchResponse.options;
-    if (!items.length) return manageTextAreas.showNoSuggestionsFoundErrorMessage(lastQuery);
+    if (!items.length) return manageTextAreas.showNoSuggestionMatch(lastQuery);
     processGeocodingSearchResults(items);
   } catch (err) {
     console.error(err);
