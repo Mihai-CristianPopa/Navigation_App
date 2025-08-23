@@ -123,7 +123,8 @@ async function performSearch() {
     processGeocodingSearchResults(items);
   } catch (err) {
     console.error(err);
-    manageTextAreas.showRequestErrorMessage(lastQuery);
+    // manageTextAreas.showRequestErrorMessage(lastQuery);
+    await showLocationSelectionDialog();
   }
 }
 
