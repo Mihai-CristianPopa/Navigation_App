@@ -111,6 +111,8 @@ async function performSearch() {
   const currentQuery = searchInput.value.trim();
   if (!currentQuery) return manageTextAreas.showNoQueryFoundErrorMessage("attraction");
 
+  clearSuggestions(false);
+
   lastQuery = currentQuery;
 
   try {
