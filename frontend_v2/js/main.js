@@ -342,10 +342,10 @@ document.getElementById("routing-button").addEventListener("click", async () => 
   mapManager.clearLastRoute();
   try {
     // const mapBoxOptimizeResponse = await geocodingRequestManager.fetchTSPRouting(manageSelectedAttractions.coordinatesString);
-    const ownOptimizationResponse = await geocodingRequestManager.fetchOwnTspRouting(manageSelectedAttractions.waypointIds, manageSelectedAttractions.coordinatesString);
-    // manageTextAreas.showDefaultAppSuccessMessage();
-    manageTextAreas.hideMessagePanel();
     // mapManager.showRouteWithNumberedMarkers(mapBoxOptimizeResponse.waypoints, mapBoxOptimizeResponse.trips[0].geometry);
+    // manageTextAreas.showDefaultAppSuccessMessage();
+    const ownOptimizationResponse = await geocodingRequestManager.fetchOwnTspRouting(manageSelectedAttractions.waypointIds, manageSelectedAttractions.coordinatesString);
+    manageTextAreas.hideMessagePanel();
     mapManager.showRouteWithNumberedMarkersV2(ownOptimizationResponse);
   } catch (error) {
     manageTextAreas.showErrorWhileGettingRoute();

@@ -34,7 +34,7 @@ export const geocodeFallbackController = async (req, res) => {
 async function limitsReachedForExternalApi() {
   let err;
   let failed = false;
-  const [perUserCount, totalCount] = await Promise.all([getDailyApiRequestCount(MAPBOX, GEOCODE, VERSION, req.user.id, null), getDailyApiRequestCount(MAPBOX, GEOCODE, VERSION)]);
+  const [perUserCount, totalCount] = await Promise.all([getDailyApiRequestCount(MAPBOX, GEOCODE, VERSION, req.user.id, null, false), getDailyApiRequestCount(MAPBOX, GEOCODE, VERSION)]);
   if (perUserCount > LIMIT.MAPBOX_PER_USER_DAILY_REQUEST_LIMIT) {
     err = ERROR_OBJECTS.EXTERNAL_API_USER_LIMIT(MAPBOX, GEOCODE, VERSION);
     logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));

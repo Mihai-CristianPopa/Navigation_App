@@ -296,7 +296,7 @@ export default class MapManager {
    */
   showRouteWithNumberedMarkers(mapboxWaypoints, mapboxGeoJson) {
     mapboxWaypoints.forEach((waypoint, index) => {
-      this._updateMarkersWithRoutingOrder(waypoint.waypoint_index, index);
+      this._updateMarkersWithRoutingOrder(index, waypoint.waypoint_index);
     });
     this._displayRoute(mapboxGeoJson);
   }
