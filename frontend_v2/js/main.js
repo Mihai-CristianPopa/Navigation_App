@@ -373,6 +373,12 @@ document.addEventListener(EVENTS.USER_LOCATION_FOUND, (e) => {
   console.log('User location added to attractions:', e.detail);
 });
 
+
+document.addEventListener(EVENTS.ADD_ATTRACTION_ON_CLICK, (e) => {
+  manageSelectedAttractions.addAttractionToContainer(e.detail);
+  console.log('Pin added to attractions:', e.detail);
+});
+
 document.addEventListener(EVENTS.USER_LOCATION_ERROR, (e) => {
   console.error('Failed to get user location:', e.detail.error);
   manageTextAreas.showLocationNotFoundFirstWaypointBecomesStartingPoint();

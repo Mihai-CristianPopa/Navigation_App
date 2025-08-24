@@ -16,7 +16,8 @@ export const EVENTS = {
   STARTING_POINT_SET: "startingPointSet",
   CURRENT_LOCATION_REMOVED: "currentLocationRemoved",
   CURRENT_LOCATION_NOT_THE_STARTING_POINT_ANYMORE: "curentLocationNotStart",
-  CURRENT_LOCATION_SET_AS_START: "currentLocationIsStart"
+  CURRENT_LOCATION_SET_AS_START: "currentLocationIsStart",
+  ADD_ATTRACTION_ON_CLICK: "addAttractionOnClick"
 };
 
 export const CURRENT_LOCATION = {

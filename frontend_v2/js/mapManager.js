@@ -19,6 +19,7 @@ export default class MapManager {
     this._permanentLabelMarkers = [];
     this._routeLayer = null;
     this._userLocationFetched = false;
+    this._droppedPinsCount = 0;
 
     this._dialogManager = new DialogManager();
     this._routeSummaryHandler = routeSummaryHandler;
@@ -52,6 +53,30 @@ export default class MapManager {
         detail: { error: e.message }
       });
       document.dispatchEvent(locationErrorEvent);
+    });
+
+    // Add new waypoint to the attractions list and markers with a default name
+    this._map.on("click", (e) => {
+      const lat = e.latlng.lat;
+      const lon = e.latlng.lng;
+      const id = `${lat}-${lon}-${Date.now()}`;
+      const waypointName = `Dropped Pin ${this._droppedPinsCount + 1}`;
+      this.addNewlySelectedAttractionMarkers(
+        id,
+        [lat, lon],
+        waypointName,
+        waypointName
+      );
+      document.dispatchEvent(new CustomEvent(EVENTS.ADD_ATTRACTION_ON_CLICK, {
+        detail: {
+          id,
+          name: waypointName,
+          description: waypointName,
+          lat,
+          lon,
+        }
+      }));
+      this._droppedPinsCount += 1;
     });
 
     document.addEventListener(EVENTS.STARTING_POINT_SET, (e) => {
