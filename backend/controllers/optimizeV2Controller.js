@@ -204,7 +204,7 @@ async function getDirectionsMatrix(profile, coordinates, apiKey, req, startTime)
 async function getDirectionsMatrixLocationIq(coordinates, apiKey, req, startTime) {
   try {
     const response = await axios.get(
-      `https://us1.locationiq.com/v1/matrix/driving/${coordinates}`,
+      `https://eu1.locationiq.com/v1/matrix/driving/${coordinates}`,
       {
         params: {
           key: apiKey,

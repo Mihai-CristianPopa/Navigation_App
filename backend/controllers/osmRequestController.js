@@ -1,8 +1,7 @@
 import logger from "../logger.js";
 import { errorObj, infoLog } from "../loggerHelper.js";
-import { ERROR_OBJECTS, INFO_MESSAGE, LIMIT, EXTERNAL_APIS } from "../utils/constants.js";
+import { ERROR_OBJECTS } from "../utils/constants.js";
 import { getExtraAttractionDetails, insertExtraAttractionDetails } from "../services/extraDetailsService.js";
-// import { fetchWikidataBatch } from "../controllers/attractionDetailsController.js";
 import axios from "axios";
 
 export const osmRequestController = async (req, res) => {
@@ -12,9 +11,13 @@ export const osmRequestController = async (req, res) => {
   const UA = 'MapNavigationApp/1.0 (mihaipopa00@gmail.com)';
 
   async function extractDataFromTags(tags, osmId, osmType) {
-    let wikidataResults;
+    let wikiDataImage;
     const wikiDataId = tags.wikidata || null;
-    if (wikiDataId) wikidataResults = await fetchWikidataBatch([wikiDataId]);
+    if (wikiDataId) {
+      const wikidataResults = await fetchWikidataBatch([wikiDataId]);
+      wikiDataImage = normalizeImage(wikidataResults[wikiDataId]?.imageUrl || null);
+    }
+
     // Extract contact + hours from OSM
     const osmName = tags.name || null;
     const osmEnglishName = tags["name:en"] || null;
@@ -22,12 +25,6 @@ export const osmRequestController = async (req, res) => {
     const openingHours = tags.opening_hours || null;
     const phone = tags.phone || tags['contact:phone'] || null;
     const email = tags.email || tags['contact:email'] || null;
-
-    // Try to get an image from OSM (either a URL or a Commons filename)
-    // const osmImageRaw = tags.image || tags['wikimedia_commons'] || null;
-    // const osmImage = normalizeImage(osmImageRaw);
-    const wikiDataImage = normalizeImage(wikidataResults[wikiDataId]?.imageUrl || null);
-    // const wikiDataId = tags.wikidata || null;wikiDataImage
 
     return {
       osmId,

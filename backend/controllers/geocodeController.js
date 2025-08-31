@@ -84,7 +84,7 @@ export const geocodeController = async (req, res) => {
 async function makeLocationIqGeocodeRequest(apiKey, place, req) {
   try {
     const response = await axios.get(
-        `https://us1.locationiq.com/v1/search.php`,
+        `https://eu1.locationiq.com/v1/search.php`,
         {
           params: {
             key: apiKey,
@@ -104,7 +104,7 @@ async function makeLocationIqGeocodeRequest(apiKey, place, req) {
 async function limitsReachedForExternalApi(req, res, startTime) {
   let err;
   let failed = false;
-  const [perUserCount, totalCount] = await Promise.all([getDailyApiRequestCount(LOCATION_IQ, GEOCODE, V1, req.user.id, null, false), getDailyApiRequestCount(LOCATION_IQ, GEOCODE, V1)]);
+  const [perUserCount, totalCount] = await Promise.all([getDailyApiRequestCount(LOCATION_IQ, null, null, req.user.id, null, false), getDailyApiRequestCount(LOCATION_IQ)]);
   if (perUserCount > LIMIT.LOCATION_IQ_PER_USER_DAILY_REQUEST_LIMIT) {
     err = ERROR_OBJECTS.EXTERNAL_API_USER_LIMIT(LOCATION_IQ, GEOCODE, V1);
     logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
