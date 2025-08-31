@@ -13,8 +13,12 @@ content-type: application/json
 
 ### 2. Extract session ID from login response cookies
 @fullCookie = {{login.response.headers.set-cookie}}
-####
+#### Successful request using the durations matrix
 GET {{baseUrl}}/api/v2/optimize?waypointIds={{waypointIds}}&coordinatesList={{coordinates}} HTTP/1.1
+Cookie: {{fullCookie}}
+
+#### Successful request using the distances matrix
+GET {{baseUrl}}/api/v2/optimize?waypointIds={{waypointIds}}&coordinatesList={{coordinates}}&useDistance=true HTTP/1.1
 Cookie: {{fullCookie}}
 
 ### 3. Failure due to missing query parameter

@@ -16,7 +16,7 @@ const { endpointPair: DIRECTIONS_MATRIX_DIRECTIONS, versionPair: VERSIONS } = ge
 
 export const optimizeV2Controller = async (req, res) => {
   const startTime = Date.now();
-  const {waypointIds, coordinatesList: coordinates} = req.query;
+  const {waypointIds, coordinatesList: coordinates, useDistance} = req.query;
   let err;
 
   if (!waypointIds) {
@@ -52,7 +52,10 @@ export const optimizeV2Controller = async (req, res) => {
     // distances and durations can be the matrix sent for computations in
 
     // Step 2: Take the matrix with distances and order the attractions in the most  efficient way to see all of them
-    let isDistance = false;
+    // We are using the brute force algorithm by default for the durations matrix, but
+    // we are providing the option to use the distances matrix as well, with an optional parameter
+    // mostly for testing purposes
+    let isDistance = useDistance === "true";
     const waypointIdArray = waypointIds.split(";");
     const distancesMatrix = response.data?.distances;
     const durationsMatrix = response.data?.durations;
