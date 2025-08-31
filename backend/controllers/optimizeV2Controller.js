@@ -25,7 +25,7 @@ const MATRIX_VERSION = EXTERNAL_APIS.MAPBOX.ENDPOINTS.DIRECTIONS_MATRIX.VERSION;
 
 export const optimizeV2Controller = async (req, res) => {
   const startTime = Date.now();
-  const {waypointIds, coordinatesList: coordinates} = req.query;
+  const {waypointIds, coordinatesList: coordinates, useDistance} = req.query;
   let err;
   let apiKey;
   let matrixResponse;
@@ -79,10 +79,17 @@ export const optimizeV2Controller = async (req, res) => {
     // distances and durations can be the matrix sent for computations in
 
     // Step 2: Take the matrix with distances and order the attractions in the most  efficient way to see all of them
+    // We are using the brute force algorithm by default for the durations matrix, but
+    // we are providing the option to use the distances matrix as well, with an optional parameter
+    // mostly for testing purposes
+    let isDistance = useDistance === "true";
     const waypointIdArray = waypointIds.split(";");
-    const distancesMatrix = matrixResponse.data?.distances || matrixResponse.data?.durations
-    const fastestRoute = bruteForce(waypointIdArray, distancesMatrix);
-    
+    const distancesMatrix = response.data?.distances;
+    const durationsMatrix = response.data?.durations;
+    const matrix = isDistance === true ? distancesMatrix : durationsMatrix;
+
+    const fastestRoute = bruteForce(waypointIdArray, matrix, isDistance);
+
     infoLog(req, startTime, INFO_MESSAGE.OWN_ATTRACTIONS_ORDER_ALG);
   
     const coordinateListForRouting = createCoordinateListForRouting(fastestRoute, coordinates.split(";"));
@@ -100,16 +107,17 @@ export const optimizeV2Controller = async (req, res) => {
 
     const route = directionsResponse.data?.routes[0];
     const totalTimeDurationInSeconds = route?.duration;
+    const totalDistanceInMeters = route?.distance;
     const legs = route?.legs;
     const geometry = route?.geometry;
 
     if (fastestRoute.steps.length !== legs.length) throw new Error("The routing API called has fewer steps than needed for the number of attractions inputted");
     for (let i = 0; i <= fastestRoute.stepCount - 1; i++) {
       fastestRoute.steps[i]["duration"] = computeStrTimeFromSeconds(legs[i].duration);
-      fastestRoute.steps[i]["distance"] = computeKilometersFromMeters(fastestRoute.steps[i]["distance"]);
+      fastestRoute.steps[i]["distance"] = computeKilometersFromMeters(legs[i]["distance"]);
     }
     fastestRoute.totalDuration = computeStrTimeFromSeconds(totalTimeDurationInSeconds);
-    fastestRoute.totalDistance = computeKilometersFromMeters(fastestRoute.totalDistance);
+    fastestRoute.totalDistance = computeKilometersFromMeters(totalDistanceInMeters);
     const finalIndicesArray = createAnArrayWithFinalWaypointIndices(fastestRoute);
     const stops = finalIndicesArray.map(waypointIdx => waypointIdArray[waypointIdx]);
     stops.push(waypointIdArray[0]);
