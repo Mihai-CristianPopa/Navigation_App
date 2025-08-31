@@ -36,17 +36,6 @@
 // routes.add route
 
 export const bruteForce = (waypointIds, matrix, isDistance=true) => {
-    function stringifyArray(array) {
-        return JSON.stringify(array, null, 2);
-    }
-    // sources
-    // const rows = {0: "A", 1: "B", 2: "C"};
-    // const row_0 = "A"
-    // const row_1 = "B"
-    // const row_2 = "C"
-
-    // destinations
-    // const cols = {0: "A", 1: "B", 2: "C"};
 
     function generateIndexToWaypointIdMap(waypointIds, mat) {
         if (waypointIds.length !== mat.length || waypointIds.length !== mat[0].length) return;
@@ -55,54 +44,30 @@ export const bruteForce = (waypointIds, matrix, isDistance=true) => {
         for (let i = 0; i <= iterNum - 1; i++) {
             idxToWaypointIdMap.set(i, waypointIds[i])
         }
-        // console.log("Waypoint to id: ", idxToWaypointIdMap);
         return idxToWaypointIdMap
     }
 
-    // const indexToWaypointIdMap = {0: "A", 1: "B", 2: "C"};
-    // const col_0 = "A"
-    // const col_1 = "B"
-    // const col_2 = "C"
+    const route_max_steps = waypointIds.length;
 
-    const distances_matrix = matrix || [
-        [0, 573, 1169.5],
-        [573, 0, 597],
-        [1169.5, 597, 0]
-    ]
+    const startingPoint = waypointIds[0];
 
-    const possible_steps = [];
+    const endingPoint = startingPoint;
 
-    let routes = [];
+    const indexToWaypointIdMap = generateIndexToWaypointIdMap(waypointIds, matrix);
 
-    const attractionsToSee = waypointIds || ["A", "B", "C"];
-
-    const route_max_steps = attractionsToSee.length;
-
-    const indexToWaypointIdMap = generateIndexToWaypointIdMap(attractionsToSee, distances_matrix);
-
-    const startingPoint = waypointIds[0] || "A";
-
-    const endingPoint = waypointIds[0] || "A";
-
-    let round = 0;
-
-    // let route = {
-    //     totalDistance: 0
-    // };
+    const possible_steps = getPossibleSteps(matrix);
 
     function getNextPossibleSteps(destination_id, route) {
-        const copyPossibleSteps = Array.from(possible_steps);
         if (route.stepCount === route_max_steps) return [];
-        if (route.stepCount === route_max_steps - 1) return copyPossibleSteps.filter(element => element.source_id === destination_id && element.destination_id === endingPoint);
-        return copyPossibleSteps.filter(element => element.source_id === destination_id && element.destination_id !== endingPoint && route.attractionsToSee.includes(element.destination_id));
+        if (route.stepCount === route_max_steps - 1) return possible_steps.filter(element => element.source_id === destination_id && element.destination_id === endingPoint);
+        return possible_steps.filter(element => element.source_id === destination_id && element.destination_id !== endingPoint && route.attractionsToSee.includes(element.destination_id));
     }
 
     /** If there is the initial route setting use the default attractionsToSee global variable else start from the previously
      * stored attractionsToSee
      */
-    function getAttractionsToSee(destination_id, remainingAttractions = attractionsToSee){
-        const copyAttractionsToSee = Array.from(remainingAttractions);
-        return copyAttractionsToSee.filter(attraction => attraction !== destination_id);
+    function getAttractionsToSee(destination_id, remainingAttractions = waypointIds){
+        return remainingAttractions.filter(attraction => attraction !== destination_id);
     }
 
     function addStepToRoute(route, step) {
@@ -116,24 +81,17 @@ export const bruteForce = (waypointIds, matrix, isDistance=true) => {
         route.nextPossibleSteps = getNextPossibleSteps(step.destination_id, route);
     }
 
-    function getPossibleSteps(mat) {
-        for (let i = 0; i < mat.length; i++) {
-            for (let j = 0; j < mat[i].length; j++) {
+    function getPossibleSteps(matrix) {
+        const possible_steps = [];
+        for (let i = 0; i < matrix.length; i++) {
+            for (let j = 0; j < matrix[i].length; j++) {
                 // On the main diagonal the distance is always 0, because this represents the route
                 // between the same source and destination
                 if (i !== j) {
-                    // possible_steps.push({
-                    //     source_waypoint_idx: i,
-                    //     destination_waypoint_idx: j,
-                    //     source_id: indexToWaypointIdMap.get(i),
-                    //     destination_id: indexToWaypointIdMap.get(j),
-                    //     distance: mat[i][j]
-                    // });
-                    possible_steps.push(buildPossibleStep(mat, i, j));
+                    possible_steps.push(buildPossibleStep(matrix, i, j));
                 }
             }
         }
-        // console.log('Possible steps:', possible_steps);
         return possible_steps;
     }
 
@@ -149,14 +107,13 @@ export const bruteForce = (waypointIds, matrix, isDistance=true) => {
         return possibleStep;
     }
 
-    function getPossibleStepsFromStartingPoint(startPoint) {
-        const startingPointSteps = possible_steps.filter(element => element.source_id === startPoint);
-        // console.log("Starting Point Steps: ", startingPointSteps);
-        return startingPointSteps;
+    function getPossibleStepsFromStartingPoint() {
+        return possible_steps.filter(element => element.source_id === startingPoint);
     }
 
     function getInitialRoutes() {
-        for (const startingPointStep of getPossibleStepsFromStartingPoint(startingPoint)) {
+        const routes = []
+        for (const startingPointStep of getPossibleStepsFromStartingPoint()) {
             let route = buildInitialRoute();
             addStepToRoute(route, startingPointStep);
             routes.push(route);
@@ -165,7 +122,7 @@ export const bruteForce = (waypointIds, matrix, isDistance=true) => {
     }
 
     function buildInitialRoute() {
-        const route = { stepCounte : 1 };
+        const route = { stepCount : 1 };
         if (isDistance) route.totalDistance = 0;
         else route.totalDuration = 0;
         return route;
@@ -175,14 +132,8 @@ export const bruteForce = (waypointIds, matrix, isDistance=true) => {
     // asta este un fel de runda, apoi incepe o noua runda, dar acum avem mai multe rute pentru care trebuie
     // sa adaugam cate o ruta pentru fiecare punct disponibil
     // deci inputul ar fi lista de rute, apoi iteram prin rute, si iteram prin punctele disponibile pentru ruta respectiva si adaugam mai multe rute
-
-
     function recursiveIterate(routes, round) {
         if (round === route_max_steps) return routes;
-        if (routes.length === 0) {
-            const initalRoutes = getInitialRoutes(); 
-            return recursiveIterate(initalRoutes, round + 1);
-        };
         let newRoutes = [];
         for (const route of routes) {
             for (const possibleStep of route.nextPossibleSteps) {
@@ -192,36 +143,7 @@ export const bruteForce = (waypointIds, matrix, isDistance=true) => {
                 newRoutes.push(newRoute);
             }
         }
-        // round += 1;
-        // routes = newRoutes;
         return recursiveIterate(newRoutes, round + 1);
-    }
-
-    // function _(inputRoute){
-    //     if (inputRoute.nextPossibleSteps.length === 0) return inputRoute;
-    //     inputRoute.stepCount += 1;
-    //     addStepToRoute(inputRoute, inputRoute.nextPossibleSteps[0]);
-    // }
-
-    function iterate() {
-        // Iterating through the initial routes
-        for (const iterRoute of routes) {
-            // Setting ending point for the initial routes
-            while (iterRoute.stepCount !== route_max_steps) {
-                // If there is just the last step left to do, then return fast
-                if (iterRoute.nextPossibleSteps.length === 1) {
-                    iterRoute.stepCount += 1;
-                    addStepToRoute(iterRoute, iterRoute.nextPossibleSteps[0]);
-                    break;
-                }
-                // If there are multiple possiblle steps, then there will be new routes that should be added
-                // and kept track of
-                for (const possibleNextStep of iterRoute.nextPossibleSteps) {
-                    iterRoute.stepCount += 1;
-                    addStepToRoute(iterRoute, possibleNextStep);
-                }
-            }
-        }
     }
 
     /** Used for sorting ascending (fastest route first) the routes based on distance */
@@ -229,6 +151,7 @@ export const bruteForce = (waypointIds, matrix, isDistance=true) => {
         return compareTotal(a, b, "totalDistance");
     }
 
+    /** Used for sorting ascending (fastest route first) the routes based on duration */
     function compareTotalDuration(a, b) {
         return compareTotal(a, b, "totalDuration");
     }
@@ -239,36 +162,13 @@ export const bruteForce = (waypointIds, matrix, isDistance=true) => {
         else return 0;
     }
 
-    function getFastestRoute() {
-        // console.log("Routes before sorting, ", routes );
+    function getFastestRoute(routes) {
         if (isDistance) routes.sort(compareTotalDistance);
         else routes.sort(compareTotalDuration);
         const fastestRoute = routes[0];
-        // console.log(stringifyArray(fastestRoute));
 
         return fastestRoute;
-        // console.log("Sorted routes: ", routes);
     }
 
-    getPossibleSteps(distances_matrix);
-
-    // getInitialRoutes();
-
-    // iterate();
-
-    routes = recursiveIterate(routes, round);
-
-    return getFastestRoute();
-    // for (const startingPointStep of getPossibleStepsFromStartingPoint(startingPoint)) {
-    //     route.stepCount = 1;
-    //     addStepToRoute(route, startingPointStep);
-    //     routes.push(route);
-    //     route = {
-    //         totalDistance: 0
-    //     };
-    // }
-
-    // console.log("Routes: ", routes);
+    return getFastestRoute(recursiveIterate(getInitialRoutes(), 1));
 }
-
-// bruteForce(null, null);
