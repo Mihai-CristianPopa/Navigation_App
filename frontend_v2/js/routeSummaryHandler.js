@@ -20,6 +20,7 @@ export default class RouteSummaryHandler {
     const totalEl = document.getElementById('routeTotal');
     line.innerHTML = '';
     totalEl.textContent = "";
+    document.getElementById('message-panel').hidden = false;
   }
 
   renderRouteLine(stops, legs, total) {

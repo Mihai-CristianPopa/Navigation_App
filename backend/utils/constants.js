@@ -39,6 +39,7 @@ export const FAILED_TO_INCREMENT_REQUEST_COUNT = (email, apiProvider, endpoint, 
 export const FAILED_TO_GET_REQUEST_COUNT = (apiProvider, endpoint, version) => `Failed to get daily API request count for ${apiProvider}/${endpoint}/${version}`;
 
 export const INFO_MESSAGE = {
+  DIRECTIONS_MATRIX: (apiProvider) => `${apiProvider} Matrix API successfully returned a response.`,
   MBOX_DIRECTIONS_MATRIX: "Mapbox Directions Matrix API successfully returned a response.",
   OWN_ATTRACTIONS_ORDER_ALG: "Own attractions ordering algorithm finished successfully.",
   MBOX_DIRECTIONS_AFTER_ORDERING: "Mapbox Directions V5 API successfully returned a response.",
@@ -53,6 +54,7 @@ export const INFO_MESSAGE = {
   LOGIN_SESSION_CREATED: (sessionId, email) => `Login session with id ${sessionId} has been created for user with email address ${email}`,
   USER_LOGGED_IN: (email) => `User with email ${email} has been logged in.`,
   USER_LOGGED_OUT: "User was logged out successfully.",
+  OPTIMIZATION_REQUEST_TO_BE_CALLED_WITH: (apiProvider, endpoint) => `Optimization request to be called with ${apiProvider}/${endpoint}.`
 }
 
 export const ERROR_OBJECTS = {
@@ -100,6 +102,12 @@ export const ERROR_OBJECTS = {
         statusCode: 401,
         message: loginErrorMessageWrongPassword(email)
       };
+    },
+    NO_DATA_FOUND: (osmId, osmType) =>  { 
+        return {
+          statusCode: 404,
+          message: `No data found for the extra details request with the osm_id: ${osmId} and osm_type: ${osmType}.`,
+        }
     },
     MISSING_API_KEY: (apiKeyUsage) => {
         return {
@@ -151,6 +159,10 @@ export const EXTERNAL_APIS = {
     ENDPOINTS: {
       GEOCODE: {
         NAME: "Geocode",
+        VERSION: "v1"
+      },
+      DIRECTIONS_MATRIX: {
+        NAME: "Directions-Matrix",
         VERSION: "v1"
       }
     }

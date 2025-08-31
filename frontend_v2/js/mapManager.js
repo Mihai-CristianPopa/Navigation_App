@@ -19,6 +19,7 @@ export default class MapManager {
     this._permanentLabelMarkers = [];
     this._routeLayer = null;
     this._userLocationFetched = false;
+    this._droppedPinsCount = 0;
 
     this._dialogManager = new DialogManager();
     this._routeSummaryHandler = routeSummaryHandler;
@@ -52,6 +53,30 @@ export default class MapManager {
         detail: { error: e.message }
       });
       document.dispatchEvent(locationErrorEvent);
+    });
+
+    // Add new waypoint to the attractions list and markers with a default name
+    this._map.on("click", (e) => {
+      const lat = e.latlng.lat;
+      const lon = e.latlng.lng;
+      const id = `${lat}-${lon}-${Date.now()}`;
+      const waypointName = `Dropped Pin ${this._droppedPinsCount + 1}`;
+      this.addNewlySelectedAttractionMarkers(
+        id,
+        [lat, lon],
+        waypointName,
+        waypointName
+      );
+      document.dispatchEvent(new CustomEvent(EVENTS.ADD_ATTRACTION_ON_CLICK, {
+        detail: {
+          id,
+          name: waypointName,
+          description: waypointName,
+          lat,
+          lon,
+        }
+      }));
+      this._droppedPinsCount += 1;
     });
 
     document.addEventListener(EVENTS.STARTING_POINT_SET, (e) => {
@@ -152,9 +177,10 @@ export default class MapManager {
    * @param {array} coordinates - [lat, lon] pairs where lat and lon are numbers
    * @param {string} searchQuery - the user' search query
    * @param {string} fullAttractionName - the full address returned by the api of the selected attraction
+   * @param {object} attractionDetails - the attraction details fetched from OSM
    */
-  addNewlySelectedAttractionMarkers(id, coordinates, searchQuery, fullAttractionName) {
-    this._addPopupMarker(id, coordinates, searchQuery, fullAttractionName);
+  addNewlySelectedAttractionMarkers(id, coordinates, searchQuery, fullAttractionName, attractionDetails=null) {
+    this._addPopupMarker(id, coordinates, searchQuery, fullAttractionName, attractionDetails);
     this._addPermanentLabelMarker(id, coordinates, searchQuery, fullAttractionName);
     this._fitAllMarkers();
   };
@@ -176,7 +202,10 @@ export default class MapManager {
 
   _updatePopupMarkerContent(marker, text) {
     marker = this._getMarkerReference(marker);
-    marker.setPopupContent(this._getPopupMarkerContent(text));
+    marker.setPopupContent(marker.attachedPopup.getContent().replace(marker.popupTitle, text));
+    marker.popupTitle = text;
+    // document.getElementById(popupId).textContent = text;
+    // marker.setPopupContent(this._getPopupMarkerContent(text));
   }
 
   _updatePermanentLabelMarketIcon(marker, withOrder, text) {
@@ -184,9 +213,80 @@ export default class MapManager {
     marker.setIcon(this._getPermanentLabelMarkerIcon(withOrder, text));
   }
 
-  _getPopupMarkerContent(popupContent) {
+  _getPopupMarkerContentCurrentLocation(popupContent) {
     return `<strong>${popupContent}</strong>`;
   }
+
+  _getPopupMarkerContent(name, attractionDetails = {}) {
+  // Handle case where attractionDetails might be null or undefined
+  const {
+    osmWebsite,
+    openingHours,
+    phone,
+    email,
+    osmImage
+  } = attractionDetails || {};
+
+  // Build content sections
+  const contentSections = [];
+  
+  // Add image section if available
+  if (osmImage) {
+    contentSections.push(
+      `<div class="popup-image">
+        <img src="${this._escape(osmImage)}" alt="${this._escape(name)}" loading="lazy" />
+      </div>`
+    );
+  }
+
+  // Add details section
+  const details = [];
+  if (openingHours) {
+    details.push(`<div class="popup-detail">
+      <i class="fa fa-clock-o"></i>
+      <span><strong>Hours:</strong> ${this._escape(openingHours)}</span>
+    </div>`);
+  }
+  
+  if (phone) {
+    details.push(`<div class="popup-detail">
+      <i class="fa fa-phone"></i>
+      <span><strong>Phone:</strong> <a href="tel:${this._escape(phone)}">${this._escape(phone)}</a></span>
+    </div>`);
+  }
+  
+  if (email) {
+    details.push(`<div class="popup-detail">
+      <i class="fa fa-envelope"></i>
+      <span><strong>Email:</strong> <a href="mailto:${this._escape(email)}">${this._escape(email)}</a></span>
+    </div>`);
+  }
+  
+  if (osmWebsite) {
+    details.push(`<div class="popup-detail">
+      <i class="fa fa-external-link"></i>
+      <span><a href="${this._escape(osmWebsite)}" target="_blank" rel="noopener noreferrer">Official Website</a></span>
+    </div>`);
+  }
+
+  // Add details section if we have any details
+  if (details.length > 0) {
+    contentSections.push(`<div class="popup-details">${details.join('')}</div>`);
+  } else {
+    contentSections.push(`<div class="popup-no-details">
+      <em>No additional information available</em>
+    </div>`);
+  }
+
+  return `
+    <div class="popup-content">
+      <div class="popup-title">
+        <strong>${this._escape(name)}</strong>
+      </div>
+      ${contentSections.join('')}
+    </div>
+  `;
+}
 
   _getPermanentLabelMarkerIcon(addRouteLabel, text) {
     let className = "marker-label";
@@ -208,7 +308,7 @@ export default class MapManager {
    * @param {Object} ownOptimizationResponse - object containing the finalIndicesArray
    */
   showRouteWithNumberedMarkersV2(ownOptimizationResponse) {
-    ownOptimizationResponse.finalIndicesArray.forEach((finalIndex, initialIndex) => {
+    ownOptimizationResponse.finalIndicesArray.forEach((initialIndex, finalIndex) => {
       this._updateMarkersWithRoutingOrder(initialIndex, finalIndex);
     });
     this._displayRoute(ownOptimizationResponse.geometry);
@@ -221,7 +321,7 @@ export default class MapManager {
    */
   showRouteWithNumberedMarkers(mapboxWaypoints, mapboxGeoJson) {
     mapboxWaypoints.forEach((waypoint, index) => {
-      this._updateMarkersWithRoutingOrder(waypoint.waypoint_index, index);
+      this._updateMarkersWithRoutingOrder(index, waypoint.waypoint_index);
     });
     this._displayRoute(mapboxGeoJson);
   }
@@ -305,7 +405,7 @@ export default class MapManager {
     this._removeMarkersFromMap(this._popupMarkers);
     this._removeMarkersFromMap(this._permanentLabelMarkers);
     
-    document.dispatchEvent(new CustomEvent(EVENTS.REMOVE_ATTRACTIONS));
+    // document.dispatchEvent(new CustomEvent(EVENTS.REMOVE_ATTRACTIONS));
 
     this._popupMarkers = [];
     this._permanentLabelMarkers = [];
@@ -324,12 +424,25 @@ export default class MapManager {
     this._map.setView(this._baseCoordinates, this._baseZoom);
   }
 
-  _addPopupMarker(id, coordinates, searchQuery, fullAttractionName) {
-    const newMarker = L.marker(coordinates, {
-      title: fullAttractionName
-    }).addTo(this._map).bindPopup(this._getPopupMarkerContent(fullAttractionName));
-    this._storeMarker(this._popupMarkers, id, newMarker, searchQuery, fullAttractionName);
-  };
+  _escape(s = '') {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+_addPopupMarker(id, coordinates, searchQuery, fullAttractionName, attractionDetails=null) {
+  const newPopup = L.popup({
+    className: "popup",
+    content: id !== this._locationId ? this._getPopupMarkerContent(fullAttractionName, attractionDetails) : this._getPopupMarkerContentCurrentLocation(fullAttractionName)
+  });
+  // newPopup.id = popupId;
+  const newMarker = L.marker(coordinates, {
+    title: fullAttractionName
+  }).addTo(this._map).bindPopup(newPopup);
+  newMarker.attachedPopup = newPopup;
+  newMarker.popupTitle = fullAttractionName;
+  this._storeMarker(this._popupMarkers, id, newMarker, searchQuery, fullAttractionName);
+};
 
   _removeMarkerFromMap(marker) {
     this._map.removeLayer(marker.markerReference);

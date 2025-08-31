@@ -3,7 +3,7 @@ import logger from "../logger.js";
 import { FAILED_TO_INCREMENT_REQUEST_COUNT, FAILED_TO_GET_REQUEST_COUNT } from "../utils/constants.js";
 
 /** Used for counting the requests made by the external APIs to count against the daily limits. */
-export async function incrementRequestCount(userId, email, apiProvider, endpoint, version) {
+export async function incrementRequestCount(userId, email, apiProvider, endpoint, version, count=1) {
     try {
         const db = dbClient.db("authentication");
         const collection  = db.collection("user_api_requests");
@@ -14,6 +14,7 @@ export async function incrementRequestCount(userId, email, apiProvider, endpoint
             apiProvider,
             endpoint,
             version,
+            count,
             timestamp: new Date(),
             date: new Date().toISOString().split('T')[0]
         };
@@ -24,7 +25,8 @@ export async function incrementRequestCount(userId, email, apiProvider, endpoint
 }
 
 /** Used for checking whether the daily limits for the external APIs have beeen reached. */
-export async function getDailyApiRequestCount(apiProvider, endpoint, version, userId=null, date = null) {
+export async function getDailyApiRequestCount(apiProvider, endpoint=null, version=null, userId=null, date = null, computeCountsBasedOnField=false) {
+    let count;
     try {
         const db = dbClient.db("authentication");
         const collection  = db.collection("user_api_requests");
@@ -33,14 +35,26 @@ export async function getDailyApiRequestCount(apiProvider, endpoint, version, us
 
         const options = {
             apiProvider,
-            endpoint,
-            version,
-            date: targetDate 
+            date: targetDate
         }
+
+        if (endpoint) options.endpoint = endpoint;
+        if (version) options.version = version;
+
+        // const options = {
+        //     apiProvider,
+        //     endpoint,
+        //     version,
+        //     date: targetDate
+        // }
 
         if (userId) options.user_id = userId;
 
-        const count = await collection.countDocuments(options);
+        if (!computeCountsBasedOnField) count = await collection.countDocuments(options);
+        else {
+            const documentsList = await collection.find(options).toArray();
+            count = documentsList.reduce((total, doc) => total + (doc.count || 0), 0);
+        }
     
         return count;
     } catch (error) {

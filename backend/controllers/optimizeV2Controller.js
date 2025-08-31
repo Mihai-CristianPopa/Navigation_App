@@ -6,18 +6,29 @@ import { bruteForce } from "../algorithm/bruteForce.js";
 import { computeStrTimeFromSeconds, computeKilometersFromMeters  } from "../utils/computations.js";
 import { ERROR_OBJECTS, INFO_MESSAGE, LIMIT, EXTERNAL_APIS } from "../utils/constants.js";
 import { getDailyApiRequestCount, incrementRequestCount } from "../services/userApiRequestsService.js";
+import { optimizeController } from "./optimizeController.js";
 
 const METHOD_FAILURE_MESSAGE = "optimizeV2Controller failure.";
 
 const MAPBOX = EXTERNAL_APIS.MAPBOX.NAME;
 
-const { endpointPair: DIRECTIONS_MATRIX_DIRECTIONS, versionPair: VERSIONS } = getPairOfEndpointsAndVersions();
+const DIRECTIONS = EXTERNAL_APIS.MAPBOX.ENDPOINTS.DIRECTIONS.NAME;
+
+const DIRECTIONS_VERSION = EXTERNAL_APIS.MAPBOX.ENDPOINTS.DIRECTIONS.VERSION;
+
+const MATRIX = EXTERNAL_APIS.MAPBOX.ENDPOINTS.DIRECTIONS_MATRIX.NAME;
+
+const MATRIX_VERSION = EXTERNAL_APIS.MAPBOX.ENDPOINTS.DIRECTIONS_MATRIX.VERSION;
+
+// const { endpointPair: DIRECTIONS_MATRIX_DIRECTIONS, versionPair: VERSIONS } = getPairOfEndpointsAndVersions();
 
 
 export const optimizeV2Controller = async (req, res) => {
   const startTime = Date.now();
   const {waypointIds, coordinatesList: coordinates, useDistance} = req.query;
   let err;
+  let apiKey;
+  let matrixResponse;
 
   if (!waypointIds) {
     err = ERROR_OBJECTS.BAD_REQUEST("waypointIds");
@@ -32,21 +43,37 @@ export const optimizeV2Controller = async (req, res) => {
   };
 
   const profile = "driving";
-  const apiKey = config.mapboxApiKey;
-  if (!apiKey) {
-    err = ERROR_OBJECTS.MISSING_API_KEY("MapBox");
-    logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
-    return res.status(err.statusCode).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);
-  }
+
+  const mapboxMatrixRequestCount = coordinates.split(";").length ** 2;
 
   try {
     // Step 0: Check if external APIs can still be made
-    const limitReached = await limitsReachedForExternalApi(req, res, startTime);
+    const limitReached = await limitsReachedForExternalApi(req, res, startTime, mapboxMatrixRequestCount);
 
-    if (limitReached === true) return;
+    if (limitReached.failed === true) return;
+
+    if (limitReached.endpoint === EXTERNAL_APIS.MAPBOX.ENDPOINTS.OPTIMIZED_TRIPS.NAME) return optimizeController(req, res);
+
+    if (limitReached.apiProvider === MAPBOX) {
+      apiKey = config.mapboxApiKey;
+      if (!apiKey) {
+        err = ERROR_OBJECTS.MISSING_API_KEY(MAPBOX);
+        logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+        return res.status(err.statusCode).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);
+      }
+      matrixResponse = await getDirectionsMatrix(profile, coordinates, apiKey, req, startTime);
+    } else if (limitReached.apiProvider === EXTERNAL_APIS.LOCATION_IQ.NAME) {
+      apiKey = config.locationIQApiKey;
+      if (!apiKey) {
+        err = ERROR_OBJECTS.MISSING_API_KEY(EXTERNAL_APIS.LOCATION_IQ.NAME);
+        logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+        return res.status(err.statusCode).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);
+      }
+      matrixResponse = await getDirectionsMatrixLocationIq(coordinates, apiKey, req, startTime);
+    }
 
     // Step 1: Request the matrix with distances
-    const response = await getDirectionsMatrix(profile, coordinates, apiKey, req, startTime);
+    // const response = await getDirectionsMatrix(profile, coordinates, apiKey, req, startTime);
     // response.data returns 
     // {destinations, distances, durations, sources}
     // distances and durations can be the matrix sent for computations in
@@ -68,6 +95,14 @@ export const optimizeV2Controller = async (req, res) => {
     const coordinateListForRouting = createCoordinateListForRouting(fastestRoute, coordinates.split(";"));
 
     // Step 3: Get the routing that will be displayed on the map
+    if (limitReached.apiProvider === EXTERNAL_APIS.LOCATION_IQ.NAME) {
+      apiKey = config.mapboxApiKey;
+      if (!apiKey) {
+        err = ERROR_OBJECTS.MISSING_API_KEY(MAPBOX);
+        logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+        return res.status(err.statusCode).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);
+      }
+    }
     const directionsResponse = await getDirections(profile, coordinateListForRouting, apiKey, req, startTime);
 
     const route = directionsResponse.data?.routes[0];
@@ -101,24 +136,43 @@ export const optimizeV2Controller = async (req, res) => {
   }
 };
 
-async function limitsReachedForExternalApi(req, res, startTime) {
+/** First we check whether the directions API which increments by 1 on each run has reached its limit. If that reached its limit we do not have a fallback so we return an error message.
+ *  Second, we check whether the Mapbox matrix API which increments by n^2 on each run has reached its limit. If so, we check whether the Location Iq API provider has reached its limit,
+ *  as it shares the same limit with the Location Iq geocoding API. If so, we fallback to the Mapbox optimize API which increments by one on each run.
+ *  https://docs.mapbox.com/api/navigation/matrix/#matrix-api-pricing
+ *  https://docs.mapbox.com/api/navigation/optimization-v1/#optimization-v1-api-pricing 
+ */
+async function limitsReachedForExternalApi(req, res, startTime, mapboxMatrixRequestCount) {
   let err;
   let failed = false;
-  const [perUserCount, totalCount] = await Promise.all([getDailyApiRequestCount(MAPBOX, DIRECTIONS_MATRIX_DIRECTIONS, VERSIONS, req.user.id, null), getDailyApiRequestCount(MAPBOX, DIRECTIONS_MATRIX_DIRECTIONS, VERSIONS)]);
-  if (perUserCount > LIMIT.MAPBOX_PER_USER_DAILY_REQUEST_LIMIT) {
-    err = ERROR_OBJECTS.EXTERNAL_API_USER_LIMIT(MAPBOX, DIRECTIONS_MATRIX_DIRECTIONS, VERSIONS);
+  let apiProvider = MAPBOX;
+  let endpoint = MATRIX;
+  const [directionsPerUserCount, directionsTotalCount, matrixPerUserCount, matrixTotalCount] = await Promise.all([getDailyApiRequestCount(MAPBOX, DIRECTIONS, DIRECTIONS_VERSION, req.user.id, null, false), 
+                                                            getDailyApiRequestCount(MAPBOX, DIRECTIONS, DIRECTIONS_VERSION), 
+                                                            getDailyApiRequestCount(MAPBOX, MATRIX, MATRIX_VERSION, req.user.id, null, true), 
+                                                            getDailyApiRequestCount(MAPBOX, MATRIX, MATRIX_VERSION, null, null, true)]);
+  if (directionsPerUserCount > LIMIT.MAPBOX_PER_USER_DAILY_REQUEST_LIMIT) {
+    err = ERROR_OBJECTS.EXTERNAL_API_USER_LIMIT(MAPBOX, DIRECTIONS, DIRECTIONS_VERSION);
     logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
     res.status(err.statusCode).json(ERROR_OBJECTS.FRONTEND_API_USER_LIMIT("routing"));
     failed = true;    
   }
-  if (totalCount > LIMIT.MAPBOX_TOTAL_DAILY_REQUEST_LIMIT) {
-    err = ERROR_OBJECTS.EXTERNAL_API_TOTAL_LIMIT(MAPBOX, DIRECTIONS_MATRIX_DIRECTIONS, VERSIONS);
+  if (directionsTotalCount > LIMIT.MAPBOX_TOTAL_DAILY_REQUEST_LIMIT) {
+    err = ERROR_OBJECTS.EXTERNAL_API_TOTAL_LIMIT(MAPBOX, DIRECTIONS, DIRECTIONS_VERSION);
     logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
     res.status(err.statusCode).json(ERROR_OBJECTS.FRONTEND_API_TOTAL_LIMIT("routing"));
     failed = true;
   }
-  infoLog(req, startTime, INFO_MESSAGE.DAILY_EXTERNAL_API_REQUEST_COUNT(totalCount, MAPBOX, DIRECTIONS_MATRIX_DIRECTIONS, VERSIONS));
-  return failed;
+  if (matrixPerUserCount + mapboxMatrixRequestCount > LIMIT.MAPBOX_PER_USER_DAILY_REQUEST_LIMIT || matrixTotalCount + mapboxMatrixRequestCount > LIMIT.MAPBOX_TOTAL_DAILY_REQUEST_LIMIT) {
+    // Check the overall Location Iq requests count, as they share the same limit
+    const [lIqPerUserCount, lIqTotalCount] = await Promise.all([getDailyApiRequestCount(EXTERNAL_APIS.LOCATION_IQ.NAME, null, null, req.user.id, null, false), getDailyApiRequestCount(EXTERNAL_APIS.LOCATION_IQ.NAME, null, null, null, null, false)]);
+    if (lIqPerUserCount <= LIMIT.LOCATION_IQ_PER_USER_DAILY_REQUEST_LIMIT && lIqTotalCount <= LIMIT.LOCATION_IQ_TOTAL_DAILY_REQUEST) {
+      apiProvider = EXTERNAL_APIS.LOCATION_IQ.NAME;
+      endpoint = EXTERNAL_APIS.LOCATION_IQ.ENDPOINTS.DIRECTIONS_MATRIX.NAME
+    } else endpoint = EXTERNAL_APIS.MAPBOX.ENDPOINTS.OPTIMIZED_TRIPS.NAME;
+  }
+  if (!failed) infoLog(req, startTime, INFO_MESSAGE.OPTIMIZATION_REQUEST_TO_BE_CALLED_WITH(apiProvider, endpoint));
+  return {failed, apiProvider, endpoint};
 }
 
 /**
@@ -133,6 +187,7 @@ async function limitsReachedForExternalApi(req, res, startTime) {
  * @returns 
  */
 async function getDirectionsMatrix(profile, coordinates, apiKey, req, startTime) {
+  const requestCount = coordinates.split(";").length ** 2;
   try {
     const response = await axios.get(
       `https://api.mapbox.com/directions-matrix/v1/mapbox/${profile}/${coordinates}`,
@@ -146,10 +201,30 @@ async function getDirectionsMatrix(profile, coordinates, apiKey, req, startTime)
       }
     );
     infoLog(req, startTime, INFO_MESSAGE.MBOX_DIRECTIONS_MATRIX);
-    incrementRequestCount(req.user.id, req.user.email, MAPBOX, DIRECTIONS_MATRIX_DIRECTIONS, VERSIONS);
+    incrementRequestCount(req.user.id, req.user.email, MAPBOX, MATRIX, MATRIX_VERSION, requestCount);
     return response;
   } catch (error) {
-    incrementRequestCount(req.user.id, req.user.email, MAPBOX, DIRECTIONS_MATRIX_DIRECTIONS, VERSIONS);
+    incrementRequestCount(req.user.id, req.user.email, MAPBOX, MATRIX, MATRIX_VERSION, requestCount);
+    throw error;
+  }
+}
+
+async function getDirectionsMatrixLocationIq(coordinates, apiKey, req, startTime) {
+  try {
+    const response = await axios.get(
+      `https://eu1.locationiq.com/v1/matrix/driving/${coordinates}`,
+      {
+        params: {
+          key: apiKey,
+          annotations: "distance,duration"
+        }
+      }
+    );
+    infoLog(req, startTime, INFO_MESSAGE.DIRECTIONS_MATRIX(EXTERNAL_APIS.LOCATION_IQ.NAME));
+    incrementRequestCount(req.user.id, req.user.email, EXTERNAL_APIS.LOCATION_IQ.NAME, EXTERNAL_APIS.LOCATION_IQ.ENDPOINTS.DIRECTIONS_MATRIX.NAME, EXTERNAL_APIS.LOCATION_IQ.ENDPOINTS.DIRECTIONS_MATRIX.VERSION);
+    return response;
+  } catch (error) {
+    incrementRequestCount(req.user.id, req.user.email, EXTERNAL_APIS.LOCATION_IQ.NAME, EXTERNAL_APIS.LOCATION_IQ.ENDPOINTS.DIRECTIONS_MATRIX.NAME, EXTERNAL_APIS.LOCATION_IQ.ENDPOINTS.DIRECTIONS_MATRIX.VERSION);
     throw error;
   }
 }
@@ -166,17 +241,24 @@ async function getDirectionsMatrix(profile, coordinates, apiKey, req, startTime)
  * @returns 
  */
 async function getDirections(profile, coordinateListForRouting, apiKey, req, startTime) {
-  const directionsResponse = await axios.get(
-    `https://api.mapbox.com/directions/v5/mapbox/${profile}/${coordinateListForRouting}`,
-    {
-      params: {
-        access_token: apiKey,
-        geometries: "geojson"
+  try {
+    const directionsResponse = await axios.get(
+      `https://api.mapbox.com/directions/v5/mapbox/${profile}/${coordinateListForRouting}`,
+      {
+        params: {
+          access_token: apiKey,
+          geometries: "geojson"
+        }
       }
-    }
-  );
-  infoLog(req, startTime, INFO_MESSAGE.MBOX_DIRECTIONS_AFTER_ORDERING);
-  return directionsResponse;
+    );
+    infoLog(req, startTime, INFO_MESSAGE.MBOX_DIRECTIONS_AFTER_ORDERING);
+    incrementRequestCount(req.user.id, req.user.email, MAPBOX, DIRECTIONS, DIRECTIONS_VERSION);
+    return directionsResponse;
+  } catch (error) {
+    incrementRequestCount(req.user.id, req.user.email, MAPBOX, DIRECTIONS, DIRECTIONS_VERSION);
+    throw error;
+  }
+  
 }
 
 /**  We could also use the destination_waypoint_idx from each of the steps to create this coordinate list and we would not need the mapping anymore */
@@ -206,13 +288,13 @@ function createAnArrayWithFinalWaypointIndices(fastestRoute) {
   return array;
 }
 
-function getPairOfEndpointsAndVersions(){
-  const endpoints = EXTERNAL_APIS.MAPBOX.ENDPOINTS;
+// function getPairOfEndpointsAndVersions(){
+//   const endpoints = EXTERNAL_APIS.MAPBOX.ENDPOINTS;
 
-  const endpointPair = `${endpoints.DIRECTIONS_MATRIX.NAME},${endpoints.DIRECTIONS.NAME}`;
+//   const endpointPair = `${endpoints.DIRECTIONS_MATRIX.NAME},${endpoints.DIRECTIONS.NAME}`;
 
-  const versionPair = `${endpoints.DIRECTIONS_MATRIX.VERSION},${endpoints.DIRECTIONS.VERSION}`;
+//   const versionPair = `${endpoints.DIRECTIONS_MATRIX.VERSION},${endpoints.DIRECTIONS.VERSION}`;
 
-  return {endpointPair, versionPair};
-}
+//   return {endpointPair, versionPair};
+// }
 

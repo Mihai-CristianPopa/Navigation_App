@@ -5,48 +5,49 @@ import axios from "axios";
 // TODO either remove this or update it
 export const attractionDetailsController = async (req, res) => {
   const startTime = Date.now();
-  const {lat, lon} = req.query;
+  const { wikidataId } = req.query;
+  // const {lat, lon} = req.query;
 
-  if (!lat) {
-    logger.error("Latitude query parameter missing from request", logObj(400, req, startTime));
-    return res.status(400).json({
-      success: false,
-      message: "Latitude coordinate is required"
-    });
-  }
+  // if (!lat) {
+  //   logger.error("Latitude query parameter missing from request", logObj(400, req, startTime));
+  //   return res.status(400).json({
+  //     success: false,
+  //     message: "Latitude coordinate is required"
+  //   });
+  // }
 
-  if (!lon) {
-    logger.error("Longitude query parameter missing from request", logObj(400, req, startTime));
-    return res.status(400).json({
-      success: false,
-      message: "Longitude coordinate is required"
-    });
-  }
+  // if (!lon) {
+  //   logger.error("Longitude query parameter missing from request", logObj(400, req, startTime));
+  //   return res.status(400).json({
+  //     success: false,
+  //     message: "Longitude coordinate is required"
+  //   });
+  // }
 
-  const apiKey = config.rapidApiKey;
-  if (!apiKey) {
-    logger.error("The API Key for RapidApi is not configured in the backend", logObj(500, req, startTime));
-    return res.status(500).json({ error: "The API Key for RapidApi is not configured in the backend" });
-  }
+  // const apiKey = config.rapidApiKey;
+  // if (!apiKey) {
+  //   logger.error("The API Key for RapidApi is not configured in the backend", logObj(500, req, startTime));
+  //   return res.status(500).json({ error: "The API Key for RapidApi is not configured in the backend" });
+  // }
 
   try {
 
-    const response = await axios.get(
-      "https://opentripmap-places-v1.p.rapidapi.com/en/places/radius", {
-        params: {
-          radius: "500",
-          limit: "1",
-          lon,
-          lat
-        },
-        headers: {
-          "x-rapidapi-key": apiKey,
-          "x-rapidapi-host": "opentripmap-places-v1.p.rapidapi.com"
-        }
-      }
-    );
+    // const response = await axios.get(
+    //   "https://opentripmap-places-v1.p.rapidapi.com/en/places/radius", {
+    //     params: {
+    //       radius: "500",
+    //       limit: "1",
+    //       lon,
+    //       lat
+    //     },
+    //     headers: {
+    //       "x-rapidapi-key": apiKey,
+    //       "x-rapidapi-host": "opentripmap-places-v1.p.rapidapi.com"
+    //     }
+    //   }
+    // );
 
-    const wikidataId = response?.data?.features[0]?.properties?.wikidata;
+    // const wikidataId = response?.data?.features[0]?.properties?.wikidata;
 
     if (!wikidataId) {
       logger.warn(`No Wikidata found for attraction with coordinates, lat: ${lat}, and lon: ${lon}`, logObj(500, req, startTime));
@@ -65,11 +66,13 @@ export const attractionDetailsController = async (req, res) => {
       }
     );
 
+    res.status(200).json(wikiDataResponse.data);
+
     console.log(wikiDataResponse);
 
-    const sparqlWikiDataResponse = await fetchWikidataBatch([wikidataId]);
+    // const sparqlWikiDataResponse = await fetchWikidataBatch([wikidataId]);
 
-    console.log(sparqlWikiDataResponse);
+    // console.log(sparqlWikiDataResponse);
 
   } catch (error) {
     logger.error("Unexpected error when fetching the attraction details", logObj(500, req, startTime));
@@ -77,7 +80,7 @@ export const attractionDetailsController = async (req, res) => {
   }
 };
 
-async function fetchWikidataBatch(qids) {
+export async function fetchWikidataBatch(qids) {
   const values = qids.map(q => `wd:${q}`).join(" ");
   const query = `
     SELECT ?item ?itemLabel ?itemDescription ?image WHERE {

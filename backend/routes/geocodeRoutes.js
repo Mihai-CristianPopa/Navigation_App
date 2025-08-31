@@ -4,6 +4,7 @@ import { optimizeController } from "../controllers/optimizeController.js";
 import { optimizeV2Controller } from "../controllers/optimizeV2Controller.js";
 import { attractionDetailsController } from "../controllers/attractionDetailsController.js";
 import { cityController, countryController } from "../controllers/countryCityController.js";
+import { osmRequestController } from "../controllers/osmRequestController.js";
 import { geocodeFallbackController } from "../controllers/geocodingFallbackController.js";
 import { requireAuthentication } from "../middleware/authMiddleware.js";
 import { checkDatabaseForAuth } from "../middleware/dbIsUpMiddleware.js";
@@ -26,6 +27,8 @@ router.get("/cities", cityController);
 router.get("/optimize", optimizeController);
 
 router.get("/v2/optimize", optimizeV2Controller);
+
+router.get("/extra-details", osmRequestController);
 
 // TODO either remove this or keep it based on decision taken for the controller
 router.get("/attraction-details", attractionDetailsController);

@@ -18,8 +18,8 @@ let lastSearchResponse = null;
 let lastQuery = null;
 let hasSuggestions = false;
 let countriesCache = null;
-const searchedQueries = [];
-const queriesForWhichFallbackSuggestionWasRequested = [];
+let searchedQueries = [];
+let queriesForWhichFallbackSuggestionWasRequested = [];
 
 const searchInput = document.getElementById("search-input");
 const suggestionList = document.getElementById("suggestions");
@@ -81,13 +81,17 @@ function processGeocodingSearchResults(items) {
 
     // DocumentFragment optimizes the DOM interaction when running append repeatedly 
     const frag = document.createDocumentFragment();
-
-    items.forEach(({ type, display_name, lat, lon, place_id }) => {
+    // When this request is sent for the LocationIq we are retrieving osm_id and osm_type
+    // And when the geocoding goes through mapbox we get back the wikidata_id
+    items.forEach(({ type, display_name, lat, lon, place_id, osm_id, osm_type, wikidata_id }) => {
       const li = document.createElement("li");
       li.textContent = `${type}: ${display_name}`;
       li.dataset.lat = lat;
       li.dataset.lon = lon;
       li.dataset.id = place_id;
+      li.dataset.osmId = osm_id;
+      li.dataset.osmType = osm_type;
+      li.dataset.wikidataId = wikidata_id;
       frag.append(li);
     });
 
@@ -107,17 +111,20 @@ async function performSearch() {
   const currentQuery = searchInput.value.trim();
   if (!currentQuery) return manageTextAreas.showNoQueryFoundErrorMessage("attraction");
 
+  clearSuggestions(false);
+
   lastQuery = currentQuery;
 
   try {
     lastSearchResponse = await geocodingRequestManager.fetchSuggestions(lastQuery);
     searchedQueries.push(currentQuery);
     const items = lastSearchResponse.options;
-    if (!items.length) return manageTextAreas.showNoSuggestionsFoundErrorMessage(lastQuery);
+    if (!items.length) return manageTextAreas.showNoSuggestionMatch(lastQuery);
     processGeocodingSearchResults(items);
   } catch (err) {
     console.error(err);
-    manageTextAreas.showRequestErrorMessage(lastQuery);
+    // manageTextAreas.showRequestErrorMessage(lastQuery);
+    await showLocationSelectionDialog();
   }
 }
 
@@ -126,7 +133,7 @@ async function performSearch() {
  * The attraction he wants to see is and a new request to get suggestions is made to a different provider while passing
  * Also the country code. If the user clicks None of the above a second time, that is still pending to be implemented.
  */
-function processSelectedSuggestion(event) {
+async function processSelectedSuggestion(event) {
   const li = event.target.closest("li");
   if (!li) return;
 
@@ -149,6 +156,12 @@ function processSelectedSuggestion(event) {
 
     clearSuggestions();
 
+    const attractionDetails = await geocodingRequestManager.fetchExtraAttractionDetails({
+      osmId: li.dataset.osmId,
+      osmType: li.dataset.osmType,
+      wikidataId: li.dataset.wikidataId
+    });
+
     const selectedAttraction = {
         id: li.dataset.id,
         name: lastQuery,
@@ -158,7 +171,7 @@ function processSelectedSuggestion(event) {
     };
     manageSelectedAttractions.addAttractionToContainer(selectedAttraction);
 
-    mapManager.addNewlySelectedAttractionMarkers(li.dataset.id, [lat, lon], lastQuery, name);
+    mapManager.addNewlySelectedAttractionMarkers(li.dataset.id, [lat, lon], lastQuery, name, attractionDetails);
   }
 }
 
@@ -175,12 +188,6 @@ async function showLocationSelectionDialog() {
     try {
       const countries = await loadCountries();
       populateCountrySelect(countries);
-
-      countrySelect.value = "";
-      // cityInput.value = "";
-      overlay.hidden = false;
-      setTimeout(() => countrySelect.focus(), 100);
-
     } catch (error) {
       console.error('Failed to load countries for dialog:', error);
       manageTextAreas.showCountrySelectionDialogErrorMessage();
@@ -188,6 +195,10 @@ async function showLocationSelectionDialog() {
       return;
     }
   }
+  countrySelect.value = "";
+  // cityInput.value = "";
+  overlay.hidden = false;
+  setTimeout(() => countrySelect.focus(), 100);
 }
 
 /** Load contries from the session storage. */
@@ -260,7 +271,7 @@ async function handleStructuredSearch() {
     // Perform the structured search request
     lastSearchResponse = await geocodingRequestManager.fetchSuggestionsFallback(lastQuery, countryCode);
     const items = lastSearchResponse.options;
-    if (!items.length) return manageTextAreas.showNoSuggestionsFoundErrorMessage(lastQuery);
+    if (!items.length) return manageTextAreas.showNoSuggestionMatch(lastQuery);;
     queriesForWhichFallbackSuggestionWasRequested.push(lastQuery);
     processGeocodingSearchResults(items);
   } catch (error) {
@@ -306,17 +317,6 @@ function populateCountrySelect(countries) {
   });
 }
 
-// function populateCitySelect(cityNames) {
-//   populateSelect("city-select", 'Select a city...', cityNames,  (frag, cityNames) => { 
-//     cityNames.forEach(cityName => {
-//       const option = document.createElement('option');
-//       option.value = cityName;
-//       option.textContent = cityName;
-//       frag.append(option);
-//     });
-//   });
-// }
-
 function collapseSuggestionsWhenClickingOutsideTheSearchContainer(event) {
   // if there was no request sent then there are no suggestions to be shown nor hidden
   // if the suggestionList is hidden it might be the case that there was already a click outsinde
@@ -343,10 +343,10 @@ document.getElementById("routing-button").addEventListener("click", async () => 
   mapManager.clearLastRoute();
   try {
     // const mapBoxOptimizeResponse = await geocodingRequestManager.fetchTSPRouting(manageSelectedAttractions.coordinatesString);
-    const ownOptimizationResponse = await geocodingRequestManager.fetchOwnTspRouting(manageSelectedAttractions.waypointIds, manageSelectedAttractions.coordinatesString);
-    // manageTextAreas.showDefaultAppSuccessMessage();
-    manageTextAreas.hideMessagePanel();
     // mapManager.showRouteWithNumberedMarkers(mapBoxOptimizeResponse.waypoints, mapBoxOptimizeResponse.trips[0].geometry);
+    // manageTextAreas.showDefaultAppSuccessMessage();
+    const ownOptimizationResponse = await geocodingRequestManager.fetchOwnTspRouting(manageSelectedAttractions.waypointIds, manageSelectedAttractions.coordinatesString);
+    manageTextAreas.hideMessagePanel();
     mapManager.showRouteWithNumberedMarkersV2(ownOptimizationResponse);
   } catch (error) {
     manageTextAreas.showErrorWhileGettingRoute();
@@ -354,7 +354,8 @@ document.getElementById("routing-button").addEventListener("click", async () => 
 });
 
 document.getElementById("clear-route-button").addEventListener("click", () => {
-  mapManager.resetMap();
+  // mapManager.resetMap();
+  clearUserState();
   manageTextAreas.showDefaultAppSuccessMessage();
 });
 
@@ -364,12 +365,18 @@ document.getElementById("search-attraction-form").addEventListener("submit", (e)
   performSearch();
 });
 
-document.addEventListener(EVENTS.REMOVE_ATTRACTIONS, () => manageSelectedAttractions.removeAllAttractions());
+// document.addEventListener(EVENTS.REMOVE_ATTRACTIONS, () => manageSelectedAttractions.removeAllAttractions());
 
 document.addEventListener(EVENTS.USER_LOCATION_FOUND, (e) => {
   manageSelectedAttractions.addAttractionToContainer(e.detail);
   manageTextAreas.showLocationIsStartingPoint();
   console.log('User location added to attractions:', e.detail);
+});
+
+
+document.addEventListener(EVENTS.ADD_ATTRACTION_ON_CLICK, (e) => {
+  manageSelectedAttractions.addAttractionToContainer(e.detail);
+  console.log('Pin added to attractions:', e.detail);
 });
 
 document.addEventListener(EVENTS.USER_LOCATION_ERROR, (e) => {
