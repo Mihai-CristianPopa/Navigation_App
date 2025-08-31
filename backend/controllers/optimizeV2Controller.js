@@ -84,8 +84,8 @@ export const optimizeV2Controller = async (req, res) => {
     // mostly for testing purposes
     let isDistance = useDistance === "true";
     const waypointIdArray = waypointIds.split(";");
-    const distancesMatrix = response.data?.distances;
-    const durationsMatrix = response.data?.durations;
+    const distancesMatrix = matrixResponse.data?.distances;
+    const durationsMatrix = matrixResponse.data?.durations;
     const matrix = isDistance === true ? distancesMatrix : durationsMatrix;
 
     const fastestRoute = bruteForce(waypointIdArray, matrix, isDistance);
