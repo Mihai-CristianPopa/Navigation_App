@@ -1,0 +1,200 @@
+@startuml architecture
+!theme plain
+skinparam monochrome true
+skinparam shadowing false
+title Navigation App — System Architecture
+
+'--- Actors
+actor "User" as User
+
+'--- Frontend Layer
+cloud "Frontend Hosting\n(GitHub Pages / Local)" as FrontendCloud {
+  component "Single Page App" as SPA {
+    component "HTML/CSS/JS" as WebApp
+    component "Leaflet Maps" as Maps
+    component "Authentication UI" as AuthUI
+    component "Search & Routing" as SearchUI
+  }
+}
+
+'--- Backend Layer
+cloud "Backend Hosting\n(Render / Local)" as BackendCloud {
+  component "Express.js API" as API {
+    component "Authentication\nRoutes" as AuthRoutes
+    component "Geocoding\nRoutes" as GeoRoutes
+    component "Optimization\nRoutes" as OptRoutes
+    component "OSM Details\nRoutes" as OSMRoutes
+    component "Country/City\nRoutes" as CountryRoutes
+  }
+  
+  package "Middleware Layer" as MiddlewareLayer {
+    component "CORS Middleware" as CORS
+    component "Rate Limiting" as RateLimit
+    component "Auth Middleware" as AuthMW
+    component "Logging Middleware" as LogMW
+    component "Request Validation" as ReqValidation
+  }
+  
+  package "Algorithm Layer" as AlgoLayer {
+    component "Brute Force TSP\nSolver" as BruteForceTSP
+  }
+  
+  component "Winston Logging" as Logging
+}
+
+'--- Database Layer
+database "MongoDB Atlas" as MongoDB {
+  storage "Users Collection" as Users
+  storage "Sessions Collection" as Sessions
+  storage "Attractions Cache" as AttrCache
+  storage "Extra Details Cache" as DetailsCache
+  storage "API Requests Log" as APILog
+}
+
+'--- External Services
+cloud "Geocoding Services" as GeoServices {
+  component "LocationIQ\n(Primary Search)" as LocationIQ
+  component "Mapbox\n(Fallback + Routing)" as Mapbox
+}
+
+cloud "Data Enrichment" as DataServices {
+  component "Overpass API\n(OSM Tags)" as Overpass
+  component "Wikidata\n(SPARQL Queries)" as Wikidata
+}
+
+cloud "Map Tiles" as TileServices {
+  component "OpenStreetMap\nTile Server" as OSMTiles
+}
+
+cloud "Monitoring" as MonitoringServices {
+  component "New Relic\nLog Aggregation" as NewRelic
+}
+
+'--- Core Components Detail
+package "Frontend Modules" as FEModules {
+  [AuthService.js] as AuthSvc
+  [ServiceUri.js] as ServiceURI
+  [MapManager.js] as MapMgr
+  [AttractionManager.js] as AttrMgr
+  [MessageManager.js] as MsgMgr
+}
+
+package "Backend Controllers" as BEControllers {
+  [loginController.js] as LoginCtrl
+  [geocodeController.js] as GeoCtrl
+  [optimizeV2Controller.js] as OptCtrl
+  [osmRequestController.js] as OSMCtrl
+  [countryCityController.js] as CountryCtrl
+}
+
+package "Backend Services" as BEServices {
+  [userService.js] as UserSvc
+  [sessionService.js] as SessionSvc
+  [attractionService.js] as AttrSvc
+  [extraDetailsService.js] as DetailsSvc
+}
+
+'--- Authentication & Security
+note right of AuthRoutes
+- Cookie-based sessions
+- bcrypt password hashing
+- Session TTL management
+- CORS: GitHub Pages + Local
+end note
+
+note right of MongoDB
+- Session auto-expiry (TTL)
+- Geocoding result caching
+- API usage tracking
+- User preferences
+end note
+
+'--- Data Flow Connections
+User --> SPA : "HTTPS"
+SPA --> OSMTiles : "Map tiles"
+SPA --> API : "HTTPS + Credentials"
+
+'--- Frontend Internal
+WebApp --> AuthSvc
+WebApp --> ServiceURI
+WebApp --> MapMgr
+WebApp --> AttrMgr
+WebApp --> MsgMgr
+
+'--- Middleware Flow
+API --> CORS
+CORS --> RateLimit
+RateLimit --> AuthMW
+AuthMW --> LogMW
+LogMW --> ReqValidation
+ReqValidation --> AuthRoutes
+ReqValidation --> GeoRoutes
+ReqValidation --> OptRoutes
+ReqValidation --> OSMRoutes
+ReqValidation --> CountryRoutes
+
+'--- Backend Internal
+AuthRoutes --> LoginCtrl
+GeoRoutes --> GeoCtrl
+OptRoutes --> OptCtrl
+OSMRoutes --> OSMCtrl
+CountryRoutes --> CountryCtrl
+
+LoginCtrl --> UserSvc
+LoginCtrl --> SessionSvc
+GeoCtrl --> AttrSvc
+OSMCtrl --> DetailsSvc
+CountryCtrl --> AttrSvc
+
+'--- Algorithm Integration
+OptCtrl --> BruteForceTSP
+OptCtrl --> Mapbox : "Matrix API + Directions"
+
+'--- Database Connections
+UserSvc --> Users
+SessionSvc --> Sessions
+AttrSvc --> AttrCache
+DetailsSvc --> DetailsCache
+API --> APILog
+
+'--- External API Connections
+GeoCtrl --> LocationIQ : "Primary geocoding"
+GeoCtrl --> Mapbox : "Fallback geocoding"
+OSMCtrl --> Overpass : "OSM tag extraction"
+OSMCtrl --> Wikidata : "Entity enrichment"
+CountryCtrl --> AttrCache : "Country list caching"
+
+'--- Monitoring
+Logging --> NewRelic : "Syslog over TLS"
+
+'--- Key Features
+note left of OptRoutes
+- Custom TSP algorithm
+- Brute force optimization
+- Mapbox integration
+- Route polylines
+end note
+
+note left of BruteForceTSP
+- Recursive route generation
+- Distance matrix processing
+- Optimal path calculation
+- Waypoint permutation
+end note
+
+note left of OSMCtrl
+- OSM ID/Type lookup
+- Wikidata ID enrichment
+- Image normalization
+- Contact info extraction
+end note
+
+note right of MiddlewareLayer
+- Request/Response logging
+- CORS policy enforcement
+- API rate limiting
+- Authentication verification
+- Input validation
+end note
+
+@enduml

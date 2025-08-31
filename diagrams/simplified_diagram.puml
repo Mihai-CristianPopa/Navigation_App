@@ -1,0 +1,53 @@
+@startuml components
+!theme plain
+skinparam monochrome true
+title Navigation App — Core Components & Data Flow
+
+'--- Main Components
+component "Frontend SPA" as Frontend {
+  [Authentication UI]
+  [Search Interface]
+  [Map Display]
+  [Route Planning]
+}
+
+component "Express API" as Backend {
+  [Auth Middleware]
+  [Geocoding Service]
+  [TSP Optimizer]
+  [Data Enrichment]
+}
+
+database "MongoDB" as DB
+cloud "External APIs" as External
+
+'--- Data Flow
+Frontend --> Backend : "1. Login/Register\n2. Search places\n3. Get route\n4. Enrich details"
+Backend --> DB : "Cache results\nStore sessions\nLog API usage"
+Backend --> External : "Geocoding\nRouting\nOSM data\nWikidata"
+External --> Backend : "Search results\nRoute geometry\nPOI details"
+Backend --> Frontend : "JSON responses\nRoute data\nMap markers"
+
+'--- Key Technologies
+note right of Frontend
+- Vanilla JavaScript (ES6+)
+- Leaflet.js for maps
+- Fetch API with credentials
+- Session storage caching
+end note
+
+note right of Backend
+- Express.js REST API
+- Cookie-based auth
+- MongoDB caching
+- Rate limiting
+end note
+
+note bottom of External
+- LocationIQ (primary search)
+- Mapbox (routing + fallback)
+- Overpass API (OSM data)
+- Wikidata (enrichment)
+end note
+
+@enduml

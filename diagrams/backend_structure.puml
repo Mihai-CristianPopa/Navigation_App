@@ -1,0 +1,64 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam dpi 300
+skinparam pageSize 595x842
+skinparam pageMargin 10
+skinparam componentStyle rectangle
+' Optional: Ensure vertical flow
+top to bottom direction
+
+package "Back-End Structure" {
+  
+  [server.js] --> [Express Server]
+  [server.js] --> [Connect to DB]
+  [server.js] --> [CORS Config]
+  [server.js] --> [Cookie Parser]
+  [server.js] --> [Health Endpoint]
+  [server.js] --> [Auth Routes]
+  [server.js] --> [Attraction Routes]
+
+  package "Middlewares" {
+    [IsDatabaseConnected]
+    [IsUserAuthenticated]
+  }
+
+  package "Routes" {
+    package "Auth Routes" {
+    [register]
+    [login]
+    [logout]
+    [me]
+  }
+
+  package "Attraction Routes" {
+    [geocode]
+    [geocode-fallback]
+    [countries]
+    [optimize-v2]
+    [extra-details]
+  }
+  }
+
+  
+
+  [Routes] --> [Middlewares]
+'   [Attraction Routes] --> [Middlewares]
+
+  package "Controllers" {
+    [Auth Controller] --> [Logger]
+    [Auth Controller] --> [logObj.js]
+    [Auth Controller] --> [Services]
+    [Auth Controller] --> [config.js]
+
+    [Attraction Controller] --> [Logger]
+    [Attraction Controller] --> [logObj.js]
+    [Attraction Controller] --> [Services]
+    [Attraction Controller] --> [config.js]
+  }
+
+  package "Services" {
+    [Services] --> [MongoDB]
+  }
+}
+
+@enduml
