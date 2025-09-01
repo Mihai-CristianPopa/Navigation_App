@@ -32,7 +32,6 @@ const backendAvailable = await authService.initialize();
     if (authService.isAuthenticated) {
       // User is already logged in
       authUI.showAuthenticatedUserAppState(authService.user);
-      mapManager.addDroppingPinListener();
     } else {
       // User needs to authenticate
       authUI.showNotAuthenticatedUserAppState();

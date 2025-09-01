@@ -36,6 +36,7 @@ class AuthService {
       if (response.ok) {
         this._user = data.user;
         this._isAuthenticated = true;
+        document.dispatchEvent(new CustomEvent(EVENTS.AUTHENTICATED, { detail: { user: this._user } }));
         return true;
       } else {
         this._user = null;

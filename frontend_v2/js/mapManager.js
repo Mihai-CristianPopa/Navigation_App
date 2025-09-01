@@ -19,7 +19,6 @@ export default class MapManager {
     this._permanentLabelMarkers = [];
     this._routeLayer = null;
     this._userLocationFetched = false;
-    this._droppedPinsCount = 0;
 
     this._dialogManager = new DialogManager();
     this._routeSummaryHandler = routeSummaryHandler;
@@ -55,29 +54,8 @@ export default class MapManager {
       document.dispatchEvent(locationErrorEvent);
     });
 
-    // Add new waypoint to the attractions list and markers with a default name
-    // this._map.on("click", (e) => {
-    //   const lat = e.latlng.lat;
-    //   const lon = e.latlng.lng;
-    //   const id = `${lat}-${lon}-${Date.now()}`;
-    //   const waypointName = `Dropped Pin ${this._droppedPinsCount + 1}`;
-    //   this.addNewlySelectedAttractionMarkers(
-    //     id,
-    //     [lat, lon],
-    //     waypointName,
-    //     waypointName
-    //   );
-    //   document.dispatchEvent(new CustomEvent(EVENTS.ADD_ATTRACTION_ON_CLICK, {
-    //     detail: {
-    //       id,
-    //       name: waypointName,
-    //       description: waypointName,
-    //       lat,
-    //       lon,
-    //     }
-    //   }));
-    //   this._droppedPinsCount += 1;
-    // });
+    document.addEventListener(EVENTS.AUTHENTICATED, () => this.addDroppingPinListener());
+    
     document.addEventListener(EVENTS.LOGOUT, () => this.removeDroppingPinListener());
 
     document.addEventListener(EVENTS.STARTING_POINT_SET, (e) => {
@@ -139,33 +117,36 @@ export default class MapManager {
       // decides to delete one of the attractions after the routing was done
   };
 
-  addDroppingPinListener() {
-    this._map.on("click", (e) => {
-      const lat = e.latlng.lat;
-      const lon = e.latlng.lng;
-      const id = `${lat}-${lon}-${Date.now()}`;
-      const waypointName = `Dropped Pin ${this._droppedPinsCount + 1}`;
-      this.addNewlySelectedAttractionMarkers(
+  _droppingPinHandler(e) {
+    const lat = e.latlng.lat;
+    const lon = e.latlng.lng;
+    const id = `${lat}-${lon}-${Date.now()}`;
+    const waypointName = `Dropped Pin ${this._droppedPinsCount + 1}`;
+    this.addNewlySelectedAttractionMarkers(
+      id,
+      [lat, lon],
+      waypointName,
+      waypointName
+    );
+    document.dispatchEvent(new CustomEvent(EVENTS.ADD_ATTRACTION_ON_CLICK, {
+      detail: {
         id,
-        [lat, lon],
-        waypointName,
-        waypointName
-      );
-      document.dispatchEvent(new CustomEvent(EVENTS.ADD_ATTRACTION_ON_CLICK, {
-        detail: {
-          id,
-          name: waypointName,
-          description: waypointName,
-          lat,
-          lon,
-        }
-      }));
-      this._droppedPinsCount += 1;
-    });
+        name: waypointName,
+        description: waypointName,
+        lat,
+        lon,
+      }
+    }));
+    this._droppedPinsCount += 1;
+  }
+
+  addDroppingPinListener() {
+    this._droppedPinsCount = 0;
+    this._map.on("click", this._droppingPinHandler.bind(this));
   }
 
   removeDroppingPinListener() {
-    this._map.off("click", () => this._droppedPinsCount = 0);
+    this._map.off("click");
   }
 
   _initMap(mapContainerId) {

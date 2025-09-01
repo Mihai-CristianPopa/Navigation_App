@@ -18,7 +18,8 @@ export const EVENTS = {
   CURRENT_LOCATION_NOT_THE_STARTING_POINT_ANYMORE: "curentLocationNotStart",
   CURRENT_LOCATION_SET_AS_START: "currentLocationIsStart",
   ADD_ATTRACTION_ON_CLICK: "addAttractionOnClick",
-  LOGOUT: "userLogout"
+  LOGOUT: "userLogout",
+  AUTHENTICATED: "userAuthenticated"
 };
 
 export const CURRENT_LOCATION = {
