@@ -1,5 +1,6 @@
 import authService from './authService.js';
 import { clearUserState } from "./main.js";
+import { EVENTS } from "./constants.js";
 
 class AuthUI {
   constructor(manageTextAreas) {
@@ -176,6 +177,7 @@ class AuthUI {
     } catch (error) {
       console.error('Logout error:', error);
     }
+    document.dispatchEvent(new CustomEvent(EVENTS.LOGOUT));
     this.showNotAuthenticatedUserAppState();
     document.body.classList.remove('authenticated');
       
