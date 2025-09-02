@@ -6,6 +6,7 @@ import dbClient from "./db/mongoClient.js";
 import geocodeRoutes from "./routes/geocodeRoutes.js";
 import authenticationRoutes from "./routes/authenticationRoutes.js";
 import { config } from "./configs/config.js";
+import { testOptimizationController } from "./controllers/testOptimizationController.js";
 
 const app = express();
 const port = config.port;
@@ -33,6 +34,9 @@ function setupRoutes() {
       timestamp: new Date().toISOString()
     });
   });
+
+  // Adding unprotected endpoint just for testing the different search algorithms
+  app.get("/test-optimization", testOptimizationController);
 }
 
 async function connectToDatabase() {

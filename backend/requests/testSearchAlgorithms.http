@@ -1,0 +1,20 @@
+@baseUrl = http://localhost:3000
+@waypointCount = 9
+@useDistanceMatrix = false
+#### Successful request using the durations matrix - brute force
+GET {{baseUrl}}/test-optimization?waypointCount={{waypointCount}}&useDistanceMatrix={{useDistanceMatrix}}&algorithm=bruteForce HTTP/1.1
+
+#### Successful request using the durations matrix - two opt
+GET {{baseUrl}}/test-optimization?waypointCount={{waypointCount}}&useDistanceMatrix={{useDistanceMatrix}}&algorithm=twoOpt HTTP/1.1
+
+#### Successful request using the durations matrix - two opt with NN start
+GET {{baseUrl}}/test-optimization?waypointCount={{waypointCount}}&useDistanceMatrix={{useDistanceMatrix}}&algorithm=twoOptNN HTTP/1.1
+
+#### Successful request using the durations matrix - nearest_neighbour
+GET {{baseUrl}}/test-optimization?waypointCount={{waypointCount}}&useDistanceMatrix={{useDistanceMatrix}}&algorithm=nearestNeighbour HTTP/1.1
+
+#### Successful request using the durations matrix - all algorithms
+GET {{baseUrl}}/test-optimization?waypointCount={{waypointCount}}&useDistanceMatrix={{useDistanceMatrix}}&algorithm=all HTTP/1.1
+
+#### Successful request using the durations matrix - two opt vs NN vs two opt with NN start
+GET {{baseUrl}}/test-optimization?waypointCount={{waypointCount}}&useDistanceMatrix={{useDistanceMatrix}}&algorithm=twoOptvsNNvstwoOptNN HTTP/1.1
