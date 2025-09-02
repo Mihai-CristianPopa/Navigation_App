@@ -1,0 +1,20 @@
+@baseUrl = http://localhost:3000
+@email = michaelScott@dundermifflin.com
+@password = davidWallaceIsAFool
+
+### 1. Login and capture session
+# @name login
+POST {{baseUrl}}/authentication/login HTTP/1.1
+content-type: application/json
+
+{
+    "email": "{{email}}",
+    "password": "{{password}}"
+}
+
+### 2. Extract session ID from login response cookies
+@fullCookie = {{login.response.headers.set-cookie}}
+
+### 3. Use session for logout
+POST {{baseUrl}}/authentication/logout HTTP/1.1
+Cookie: {{fullCookie}}

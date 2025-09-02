@@ -1,0 +1,41 @@
+@baseUrl = http://localhost:3000
+@email = michaelScott@dundermifflin.com
+@password = davidWallaceIsAFool
+@bullshitCookie = sid=something
+@foolObjectId = sid=5a9427648b0beebeb6957b63
+
+### 1. Login and capture session
+# @name login
+POST {{baseUrl}}/authentication/login HTTP/1.1
+content-type: application/json
+
+{
+    "email": "{{email}}",
+    "password": "{{password}}"
+}
+
+### 2. Extract session ID from login response cookies
+@fullCookie = {{login.response.headers.set-cookie}}
+
+### 3. Use session for checking whether the user is logged in or not
+GET {{baseUrl}}/authentication/me HTTP/1.1
+Cookie: {{fullCookie}}
+
+### 4. Clear the session first (logout)
+POST {{baseUrl}}/authentication/logout HTTP/1.1
+Cookie: {{fullCookie}}
+
+### 5. Trying to see if a user is logged in without sending any cookie
+GET {{baseUrl}}/authentication/me HTTP/1.1
+
+### 6. Use bullshit cookie so the ObjectId check fails
+GET {{baseUrl}}/authentication/me HTTP/1.1
+Cookie: {{bullshitCookie}}
+
+### 7. getLoginSession failure, is a valid ObjectId to mock the Cookie session id
+GET {{baseUrl}}/authentication/me HTTP/1.1
+Cookie: {{foolObjectId}}
+
+### 8.TODO expiration date failure will fake it from debugger by changing the login_time property to '2025-08-06T07:39:19.316Z'.
+GET {{baseUrl}}/authentication/me HTTP/1.1
+Cookie: {{fullCookie}}

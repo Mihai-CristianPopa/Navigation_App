@@ -1,0 +1,23 @@
+@baseUrl = http://localhost:3000
+@query = Colosseum
+@countryCode = IT
+@readFromCache = true
+@writeToCache = false
+@proximity = 14.24263000,40.55073000
+
+# Successful request
+# @name login
+POST http://localhost:3000/authentication/login HTTP/1.1
+content-type: application/json
+
+{
+    "email": "michaelScott@dundermifflin.com",
+    "password": "davidWallaceIsAFool"
+}
+###
+@fullCookie = {{login.response.headers.set-cookie}}
+###
+
+### 2. Successful Get suggestions request
+GET {{baseUrl}}/api/geocode-fallback?place={{query}}&countryCode={{countryCode}}&proximity={{proximity}} HTTP/1.1
+Cookie: {{fullCookie}}

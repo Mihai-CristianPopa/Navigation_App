@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Navigation App</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="./css/style.css" />
+    <script type="module" src="./js/main.js"></script>
+</head>
+<body>
+    <div id="app-container">
+        <!-- Full-screen map -->
+        <div id="map"></div>
+        
+        <!-- Authentication Panel -->
+        <div id="used-for-hiding-auth-panel" hidden>
+            <div id="auth-panel" class="floating-panel">
+                <div id="auth-content">
+                    <h3 id="auth-title">Welcome to Navigation App</h3>
+                    <p id="auth-description">Please sign in to access full features</p>
+                    
+                    <!-- Login Form -->
+                    <div id="used-for-hiding-login-form">
+                        <form id="login-form" class="auth-form">
+                            <div class="form-group">
+                                <label for="login-email">Email:</label>
+                                <input type="email" id="login-email" required autocomplete="email">
+                            </div>
+                            <div class="form-group">
+                                <label for="login-password">Password:</label>
+                                <!-- <input type="password" id="login-password" required autocomplete="current-password"> -->
+                                <input type="password" id="login-password" required>
+                            </div>
+                            <button type="submit" class="auth-button primary">Sign In</button>
+                            <button type="button" id="show-register" class="auth-button secondary">Need an account? Register</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Register Form -->
+                    <div id="used-for-hiding-register-form" hidden>
+                        <form id="register-form" class="auth-form">
+                            <div class="form-group">
+                                <label for="register-email">Email:</label>
+                                <input type="email" id="register-email" required autocomplete="email">
+                            </div>
+                            <div class="form-group">
+                                <label for="register-password">Password:</label>
+                                <input type="password" id="register-password" required autocomplete="new-password" minlength="8">
+                            </div>
+                            <div class="form-group">
+                                <label for="register-confirm-password">Confirm Password:</label>
+                                <input type="password" id="register-confirm-password" required autocomplete="new-password" minlength="8">
+                            </div>
+                            <button type="submit" class="auth-button primary">Create Account</button>
+                            <button type="button" id="show-login" class="auth-button secondary">Already have an account? Sign In</button>
+                        </form>
+                    </div>
+                    
+                    <div id="auth-error" class="error-message" hidden></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- User Info Panel (when authenticated) -->
+        <div id="used-for-hiding-user-panel" hidden>
+            <div id="user-panel" class="floating-panel">
+                <div id="user-info">
+                    <span id="user-email"></span>
+                    <button id="logout-button" class="auth-button secondary">
+                        <i class="fa fa-sign-out"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Popup in case of removal of attraction after routing is done -->
+        <div id="used-for-hiding-confirmation-dialog-overlay" hidden>
+            <div id="confirmation-dialog-overlay" class="dialog-overlay">
+                <div id="confirmation-dialog" class="confirmation-dialog">
+                    <div class="dialog-header">
+                        <h4 id="dialog-title">Remove Attraction</h4>
+                    </div>
+                    <div class="dialog-body">
+                        <p id="dialog-message">
+                            Removing this attraction will clear the current route. Do you want to continue?
+                        </p>
+                    </div>
+                    <div class="dialog-actions">
+                        <button id="dialog-cancel" class="dialog-button secondary">Cancel</button>
+                        <button id="dialog-continue" class="dialog-button primary">Continue</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Location Selection Dialog -->
+        <div id="used-for-hiding-location-dialog-overlay" hidden>
+            <div id="location-dialog-overlay" class="dialog-overlay">
+                <div id="location-dialog" class="confirmation-dialog">
+                    <div class="dialog-header">
+                        <h4>Select Location</h4>
+                    </div>
+                    <div class="dialog-body">
+                        <p style="margin-bottom: 1rem; color: #666;">
+                            No suitable results found. Please specify a country to aid searching.
+                        </p>
+                        <form id="location-selection-form" class="location-form">
+                            <div class="form-group">
+                                <label for="country-select">Country *</label>
+                                <select id="country-select" required disabled>
+                                    <option value="">Loading countries...</option>
+                                </select>
+                            </div>
+                            <!-- Removing the option to select a city for now -->
+                            <!-- <div class="form-group">
+                                <label for="city-select">City (optional)</label>
+                                    <select id="city-select">
+                                        <option value="">Loading cities...</option>
+                                    </select>
+                            </div> -->
+                        </form>
+                    </div>
+                    <div class="dialog-actions">
+                        <button id="location-dialog-cancel" class="dialog-button secondary">Cancel</button>
+                        <button id="location-dialog-search" class="dialog-button primary">Search</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Floating message panel at the top -->
+        <p id="message-panel" class="floating-panel message-area" hidden></p>
+
+        <!-- Route panel, shown after clicking on Get Route, hidden after calling reset map -->
+        <div id="route-panel" class="floating-panel message-area" hidden>
+            <div class="route-line" id="routeLine"></div>
+            <div class="route-total" id="routeTotal"></div>
+        </div>
+        
+        <!-- Floating controls panel -->
+        <div id="used-for-hiding-controls-panel" hidden>
+            <div id="controls-panel" class="floating-panel">
+                <!-- Location status Message Area -->
+                <p id="location-status"></p>
+                <!-- Search Container -->
+                <div id="search-container">
+                    <form id="search-attraction-form" class="search-attraction" autocomplete="off">
+                        <input id="search-input"
+                            type="text"
+                            placeholder="Search for an attraction…" 
+                            autocomplete="off"
+                            aria-expanded="false"
+                            aria-haspopup="listbox"
+                            role="combobox"
+                        >
+                        <button id="search-button" type="submit" aria-label="Search">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </form>
+                    <ul id="suggestions" hidden role="listbox" aria-label="Search suggestions"></ul>
+                </div>
+                
+                <!-- Attractions List -->
+                <div id="attractions-section">
+                    <h4>Selected Attractions</h4>
+                    <ul id="attractions-items"></ul>
+                    <div id="routing-buttons-container">
+                        <button id="routing-button" type="button">Get routing</button>
+                        <button id="clear-route-button" type="button">Reset map</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin="">
+    </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+### First make sure a user is registered
+POST http://localhost:3000/authentication/register HTTP/1.1
+content-type: application/json
+
+{
+    "email": "michaelScott@dundermifflin.com",
+    "password": "davidWallaceIsAFool"
+}
+
+### Successful delete request
+DELETE http://localhost:3000/authentication/delete-user?email=michaelScott%40dundermifflin.com HTTP/1.1
+content-type: application/json
+
+###
+
+# Failed delete request
+DELETE http://localhost:3000/authentication/delete-user HTTP/1.1
+content-type: application/json
