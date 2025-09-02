@@ -96,6 +96,7 @@ export default class MapManager {
         // User confirmed, clear the route
         this.clearLastRoute();
         this._clearRoutingOrder();
+        document.getElementById('message-panel').hidden = false;
         console.log('Route cleared due to attraction removal');
       }
       const listItem = e.detail;
