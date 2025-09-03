@@ -36,7 +36,6 @@
 // routes.add route
 
 export const bruteForce = (waypointIds, matrix, isDistance=true) => {
-
     function generateIndexToWaypointIdMap(waypointIds, mat) {
         if (waypointIds.length !== mat.length || waypointIds.length !== mat[0].length) return;
         let iterNum = waypointIds.length;
@@ -46,6 +45,8 @@ export const bruteForce = (waypointIds, matrix, isDistance=true) => {
         }
         return idxToWaypointIdMap
     }
+
+    const startTime = process.hrtime();
 
     const route_max_steps = waypointIds.length;
 
@@ -122,7 +123,11 @@ export const bruteForce = (waypointIds, matrix, isDistance=true) => {
     }
 
     function buildInitialRoute() {
-        const route = { stepCount : 1 };
+        const route = {
+            algorithm: "bruteForce",
+            computeTime: "", 
+            stepCount : 1
+         };
         if (isDistance) route.totalDistance = 0;
         else route.totalDuration = 0;
         return route;
@@ -166,7 +171,11 @@ export const bruteForce = (waypointIds, matrix, isDistance=true) => {
         if (isDistance) routes.sort(compareTotalDistance);
         else routes.sort(compareTotalDuration);
         const fastestRoute = routes[0];
-
+        
+        const endTime = process.hrtime(startTime);
+        const ms = endTime[0] * 1000 + endTime[1] / 1000000;
+        fastestRoute.computeTime = `${ms.toFixed(3)} ms`;
+        // fastestRoute["computeTime"] = `${Date.now() - startTime} ms`;
         return fastestRoute;
     }
 

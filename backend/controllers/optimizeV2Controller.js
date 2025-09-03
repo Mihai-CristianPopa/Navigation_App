@@ -7,6 +7,9 @@ import { computeStrTimeFromSeconds, computeKilometersFromMeters  } from "../util
 import { ERROR_OBJECTS, INFO_MESSAGE, LIMIT, EXTERNAL_APIS } from "../utils/constants.js";
 import { getDailyApiRequestCount, incrementRequestCount } from "../services/userApiRequestsService.js";
 import { optimizeController } from "./optimizeController.js";
+import { buildNearestNeighborResponse } from "../algorithm/nearestNeighbour.js";
+import { twoOpt } from "../algorithm/twoOpt.js";
+import { extractInitialOrder, previousComputeTimeInMs } from "../controllers/testOptimizationController.js";
 
 const METHOD_FAILURE_MESSAGE = "optimizeV2Controller failure.";
 
@@ -88,9 +91,10 @@ export const optimizeV2Controller = async (req, res) => {
     const durationsMatrix = matrixResponse.data?.durations;
     const matrix = isDistance === true ? distancesMatrix : durationsMatrix;
 
-    const fastestRoute = bruteForce(waypointIdArray, matrix, isDistance);
+    // const fastestRoute = bruteForce(waypointIdArray, matrix, isDistance);
+    const fastestRoute = computeFastestRoute(waypointIdArray, matrix, isDistance);
 
-    infoLog(req, startTime, INFO_MESSAGE.OWN_ATTRACTIONS_ORDER_ALG);
+    // infoLog(req, startTime, INFO_MESSAGE.OWN_ATTRACTIONS_ORDER_ALG);
   
     const coordinateListForRouting = createCoordinateListForRouting(fastestRoute, coordinates.split(";"));
 
@@ -135,6 +139,17 @@ export const optimizeV2Controller = async (req, res) => {
     res.status(500).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);
   }
 };
+
+function computeFastestRoute(waypointIdArray, matrix, isDistance) {
+  let fastestRoute;
+  if (waypointIdArray.length <= 5) fastestRoute = bruteForce(waypointIdArray, matrix, isDistance);
+  else {
+    const nnRoute = buildNearestNeighborResponse(waypointIdArray, matrix, isDistance);
+    fastestRoute = twoOpt(waypointIdArray, matrix, isDistance === "true", extractInitialOrder(nnRoute), previousComputeTimeInMs(nnRoute));
+  }
+  logger.info(INFO_MESSAGE.OWN_ATTRACTIONS_ORDER_ALG, fastestRoute)
+  return fastestRoute;
+}
 
 /** First we check whether the directions API which increments by 1 on each run has reached its limit. If that reached its limit we do not have a fallback so we return an error message.
  *  Second, we check whether the Mapbox matrix API which increments by n^2 on each run has reached its limit. If so, we check whether the Location Iq API provider has reached its limit,
