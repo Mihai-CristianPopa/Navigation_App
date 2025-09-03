@@ -1,2 +1,2 @@
-# Navigation_App
-Navigation App using  Leaflet.js on top of OpenStreetMaps
+# Map NavigationApp
+Map Navigation App - Mihai-Cristian Popa - Dissertation Project September 2025
