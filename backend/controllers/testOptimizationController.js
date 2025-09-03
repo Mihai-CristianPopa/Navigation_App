@@ -12,11 +12,15 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import simplifyGeojson from "simplify-geojson";
 import { twoOpt } from "../algorithm/twoOpt.js";
+import { computeStrTimeFromSeconds, computeKilometersFromMeters  } from "../utils/computations.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const imagesDir = path.join(__dirname, "..", "images");
+
+// Got the idea of representing the results from here:
+// https://lopezyse.medium.com/graphs-solving-the-travelling-salesperson-problem-tsp-in-python-54ec2b315977
 
 export const testOptimizationController = async (req, res) => {
 
@@ -194,6 +198,129 @@ export const testOptimizationController = async (req, res) => {
             originalIndices: slicedWaypoints.map(waypoint => waypoint.originalIndex) // For matrix reordering if needed
         };
     }
+
+    async function runNTestingIterations(waypointCount, useDistanceMatrix, algorithm = null, iterationCount = 3) {
+      const completeHistory = [];
+      const allRoutes = [];
+      for (let i = 0; i < iterationCount; i++) {
+        const testData = await createShuffledTestData(Number.parseInt(waypointCount));
+        logger.info("After shuffle waypoint order: ", testData.waypointIdArray);
+
+        const matrix = useDistanceMatrix === "true" ? testData.distanceMatrix : testData.durationMatrix;
+        const routes = [];
+      
+      // The brute force algorithm breaks in case there are more than 9 way-points
+      if (matrix.length <= 9) {
+        route = bruteForce(testData.waypointIdArray, matrix, useDistanceMatrix === "true");
+        logger.info(`Result of ${route.algorithm} algorithm computed in ${route.computeTime}`, route);
+        await getMapboxImage(route.steps, createCoordinateListForRouting(route, testData.coordinatesArray), testData.coordsById, route.algorithm);
+
+        routes.push(route);
+      }
+
+      route = twoOpt(testData.waypointIdArray, matrix, useDistanceMatrix === "true");
+      await getMapboxImage(route.steps, createCoordinateListForRouting(route, testData.coordinatesArray), testData.coordsById, route.algorithm);
+      // logger.info(`Result of ${route.algorithm} algorithm computed in ${route.computeTime}`, route);
+      routes.push(route);
+      
+      route = buildNearestNeighborResponse(testData.waypointIdArray, matrix, useDistanceMatrix === "true");
+      // logger.info(`Result of ${route.algorithm} algorithm computed in ${route.computeTime}`);
+      await getMapboxImage(route.steps, createCoordinateListForRouting(route, testData.coordinatesArray), testData.coordsById, route.algorithm);
+      routes.push(route);
+      
+      route = twoOpt(testData.waypointIdArray, matrix, useDistanceMatrix === "true", extractInitialOrder(route), previousComputeTimeInMs(route));
+      // logger.info(`Result of ${route.algorithm} algorithm computed in ${route.computeTime}`, route);
+      await getMapboxImage(route.steps, createCoordinateListForRouting(route, testData.coordinatesArray), testData.coordsById, route.algorithm);
+
+      
+      routes.push(route);
+      
+      logger.info(`All routes for test ${i}`, routes);
+      const testObject = {
+        initialWaypointOrder: testData.waypointIdArray,
+        testResults: fetchComputeTimeAndAlgorithmNameFromRoutes(routes)
+      };
+
+      completeHistory.push(testObject);
+      allRoutes.push(routes);
+    }
+
+
+      // Aggregate results by algorithm
+      const algorithmStats = {};
+      
+      completeHistory.forEach(testResult => {
+        testResult.testResults.forEach(result => {
+          const algoName = result.algorithm;
+          
+          if (!algorithmStats[algoName]) {
+            algorithmStats[algoName] = {
+              algorithm: algoName,
+              computeTimes: [],
+              totalCosts: [],
+              runs: 0
+            };
+          }
+          
+          // Extract compute time (remove " ms" suffix)
+          const computeTimeMs = Number.parseFloat(result.computeTime.split(" ")[0]);
+          algorithmStats[algoName].computeTimes.push(computeTimeMs);
+          
+          // Extract total cost (distance or duration)
+          const totalCost = result.totalDistanceFloat || result.totalDurationFloat;
+          algorithmStats[algoName].totalCosts.push(totalCost);
+          
+          algorithmStats[algoName].runs++;
+        });
+      });
+  
+    // Calculate averages for each algorithm
+      const aggregatedResults = Object.values(algorithmStats).map(stats => {
+      const avgComputeTime = stats.computeTimes.reduce((sum, time) => sum + time, 0) / stats.runs;
+      const avgTotalCost = stats.totalCosts.reduce((sum, cost) => sum + cost, 0) / stats.runs;
+      
+      // Calculate standard deviation for better insights
+      const computeTimeVariance = stats.computeTimes.reduce((sum, time) => sum + Math.pow(time - avgComputeTime, 2), 0) / stats.runs;
+      const costVariance = stats.totalCosts.reduce((sum, cost) => sum + Math.pow(cost - avgTotalCost, 2), 0) / stats.runs;
+      
+      return {
+        algorithm: stats.algorithm,
+        avgComputeTime: `${avgComputeTime.toFixed(3)} ms`,
+        ...(useDistanceMatrix === "true" 
+          ? { avgTotalDistance: computeKilometersFromMeters(avgTotalCost) }
+          : { avgTotalDuration: computeStrTimeFromSeconds(avgTotalCost) }
+        ),
+        computeTimeStdDev: Math.sqrt(computeTimeVariance).toFixed(3),
+        runs: stats.runs,
+        avgComputeTimeFloat: avgComputeTime,
+        avgTotalCost: avgTotalCost.toFixed(2),
+        avgTotalCostFloat: avgTotalCost,
+        costStdDev: Math.sqrt(costVariance).toFixed(2),
+        // Add formatted versions if needed
+        
+      };
+    });
+    
+    // Sort by average performance (lowest cost first)
+    // aggregatedResults.sort((a, b) => a.avgTotalCostFloat - b.avgTotalCostFloat);
+
+    const resultOfTests = {
+      testMetadata: {
+        iterations: iterationCount,
+        waypointCount: Number.parseInt(waypointCount),
+        useDistanceMatrix: useDistanceMatrix === "true",
+        totalTests: completeHistory.length
+      },
+      aggregatedResults,
+      completeHistory,
+      allRoutes,
+    }
+
+    logger.info("Test run result: ", resultOfTests);
+    res.status(200).json(resultOfTests);
+
+  }
+
     const {waypointCount, useDistanceMatrix, algorithm} = req.query;
     let route;
     const testData = await createShuffledTestData(Number.parseInt(waypointCount));
@@ -205,7 +332,7 @@ export const testOptimizationController = async (req, res) => {
     else if (algorithm === "twoOpt") route = twoOpt(testData.waypointIdArray, matrix, useDistanceMatrix === "true")
     else if (algorithm === "twoOptNN") {
       route = buildNearestNeighborResponse(testData.waypointIdArray, matrix, useDistanceMatrix === "true");
-      route = twoOpt(testData.waypointIdArray, matrix, useDistanceMatrix === "true", route.steps.map(s => s.destination_waypoint_idx));
+      route = twoOpt(testData.waypointIdArray, matrix, useDistanceMatrix === "true", extractInitialOrder(route), previousComputeTimeInMs(route));
     } else if (algorithm === "twoOptvsNNvstwoOptNN") {
       const routes = [];
 
@@ -219,47 +346,50 @@ export const testOptimizationController = async (req, res) => {
       logger.info(`Result of ${route.algorithm} algorithm computed in ${route.computeTime}`, route);
       routes.push(route);
 
-      route = twoOpt(testData.waypointIdArray, matrix, useDistanceMatrix === "true", route.steps.map(s => s.destination_waypoint_idx));
+      route = twoOpt(testData.waypointIdArray, matrix, useDistanceMatrix === "true", extractInitialOrder(route), previousComputeTimeInMs(route));
       await getMapboxImage(route.steps, createCoordinateListForRouting(route, testData.coordinatesArray), testData.coordsById, route.algorithm);
       logger.info(`Result of ${route.algorithm} algorithm computed in ${route.computeTime}`, route);
       routes.push(route);
 
-      // logger.info("All routes", routes);
+      logger.info("All routes", routes);
+      extractComputeTimeAndAlgorithmNameFromRoutes(routes);
 
       return res.status(200).json(routes);
 
     }
     else if (algorithm === "all") {
-      const routes = [];
+      return runNTestingIterations(waypointCount, useDistanceMatrix, algorithm, 1);
+      // const routes = [];
       
-      // The brute force algorithm breaks in case there are more than 9 way-points
-      if (matrix.length <= 9) {
-        route = bruteForce(testData.waypointIdArray, matrix, useDistanceMatrix === "true");
-        logger.info(`Result of ${route.algorithm} algorithm computed in ${route.computeTime}`, route);
-        await getMapboxImage(route.steps, createCoordinateListForRouting(route, testData.coordinatesArray), testData.coordsById, route.algorithm);
+      // // The brute force algorithm breaks in case there are more than 9 way-points
+      // if (matrix.length <= 9) {
+      //   route = bruteForce(testData.waypointIdArray, matrix, useDistanceMatrix === "true");
+      //   logger.info(`Result of ${route.algorithm} algorithm computed in ${route.computeTime}`, route);
+      //   await getMapboxImage(route.steps, createCoordinateListForRouting(route, testData.coordinatesArray), testData.coordsById, route.algorithm);
 
-        routes.push(route);
-      }
+      //   routes.push(route);
+      // }
 
-      route = twoOpt(testData.waypointIdArray, matrix, useDistanceMatrix === "true");
-      await getMapboxImage(route.steps, createCoordinateListForRouting(route, testData.coordinatesArray), testData.coordsById, route.algorithm);
-      logger.info(`Result of ${route.algorithm} algorithm computed in ${route.computeTime}`, route);
-      routes.push(route);
+      // route = twoOpt(testData.waypointIdArray, matrix, useDistanceMatrix === "true");
+      // await getMapboxImage(route.steps, createCoordinateListForRouting(route, testData.coordinatesArray), testData.coordsById, route.algorithm);
+      // logger.info(`Result of ${route.algorithm} algorithm computed in ${route.computeTime}`, route);
+      // routes.push(route);
       
-      route = buildNearestNeighborResponse(testData.waypointIdArray, matrix, useDistanceMatrix === "true");
-      logger.info(`Result of ${route.algorithm} algorithm computed in ${route.computeTime}`);
-      await getMapboxImage(route.steps, createCoordinateListForRouting(route, testData.coordinatesArray), testData.coordsById, route.algorithm);
-      routes.push(route);
+      // route = buildNearestNeighborResponse(testData.waypointIdArray, matrix, useDistanceMatrix === "true");
+      // logger.info(`Result of ${route.algorithm} algorithm computed in ${route.computeTime}`);
+      // await getMapboxImage(route.steps, createCoordinateListForRouting(route, testData.coordinatesArray), testData.coordsById, route.algorithm);
+      // routes.push(route);
       
-      route = twoOpt(testData.waypointIdArray, matrix, useDistanceMatrix === "true", route.steps.map(s => s.destination_waypoint_idx));
-      logger.info(`Result of ${route.algorithm} algorithm computed in ${route.computeTime}`, route);
-      await getMapboxImage(route.steps, createCoordinateListForRouting(route, testData.coordinatesArray), testData.coordsById, route.algorithm);
+      // route = twoOpt(testData.waypointIdArray, matrix, useDistanceMatrix === "true", extractInitialOrder(route), previousComputeTimeInMs(route));
+      // logger.info(`Result of ${route.algorithm} algorithm computed in ${route.computeTime}`, route);
+      // await getMapboxImage(route.steps, createCoordinateListForRouting(route, testData.coordinatesArray), testData.coordsById, route.algorithm);
 
       
-      routes.push(route);
-      logger.info("All routes", routes);
+      // routes.push(route);
+      // logger.info("All routes", routes);
+      // extractComputeTimeAndAlgorithmNameFromRoutes(routes);
 
-      return res.status(200).json(routes);
+      // return res.status(200).json(routes);
     }
     else route = buildNearestNeighborResponse(testData.waypointIdArray, matrix, useDistanceMatrix === "true");
     await getMapboxImage(route.steps, createCoordinateListForRouting(route, testData.coordinatesArray), testData.coordsById, algorithm);
@@ -281,6 +411,49 @@ function createCoordinateListForRouting(fastestRoute, inputCoordinatesArray) {
   }
   return coordinatesArray.join(";");
 }
+
+export function extractInitialOrder(route) {
+  const initialOrder = route.steps.map(s => s.source_waypoint_idx);
+  return initialOrder;
+}
+
+  function fetchComputeTimeAndAlgorithmNameFromRoutes(routes) {
+    const resultForTable = routes.map(route => extractComputeTimeAndAlgorithmNameFromRoute(route));
+    resultForTable.nodes = routes[0].stepCount;
+    return resultForTable;
+  }
+
+  function extractComputeTimeAndAlgorithmNameFromRoutes(routes) {
+    // const resultForTable = routes.map(route => extractComputeTimeAndAlgorithmNameFromRoute(route));
+    // resultForTable.nodes = routes[0].stepCount;
+    logger.info("Details for building the comparison table: ", fetchComputeTimeAndAlgorithmNameFromRoutes(routes));
+  }
+
+  function extractComputeTimeAndAlgorithmNameFromRoute(route) {
+    const obj = {
+      algorithm: route.algorithm,
+      computeTime: route.computeTime,
+    }
+    if(route.totalDistance) {
+      obj.totalDistanceFloat = Number.parseFloat(route.totalDistance);
+      obj.totalDistance = computeKilometersFromMeters(route.totalDistance);
+    }
+    else {
+      obj.totalDurationFloat = Number.parseFloat(route.totalDuration);
+      obj.totalDuration = computeStrTimeFromSeconds(route.totalDuration);
+    }
+    // return {
+    //   algorithm: route.algorithm,
+    //   computeTime: route.computeTime,
+    //   total: ...{route.totalDuration ? route.totalDuration : route.totalDistance}
+    // }
+
+    return obj;
+  }
+
+  export function previousComputeTimeInMs(route) {
+    return Number.parseFloat(route.computeTime.split(" ")[0]);
+  }
 
     // function createTestMatrix(matrixDimension, testData = TEST_SCENARIOS.TWENTY_FIVE_POINTS) {
     //     const dist_mat = [];

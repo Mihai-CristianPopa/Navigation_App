@@ -1,5 +1,5 @@
 @baseUrl = http://localhost:3000
-@waypointCount = 9
+@waypointCount = 5
 @useDistanceMatrix = false
 #### Successful request using the durations matrix - brute force
 GET {{baseUrl}}/test-optimization?waypointCount={{waypointCount}}&useDistanceMatrix={{useDistanceMatrix}}&algorithm=bruteForce HTTP/1.1

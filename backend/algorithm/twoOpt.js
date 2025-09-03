@@ -1,4 +1,5 @@
-export function twoOpt(waypointIds, matrix, isDistance = true, initialOrder = null) {
+// Started from this: https://github.com/AustinLBuchanan/TSP_VRP/blob/main/two_opt_heuristic.ipynb
+export function twoOpt(waypointIds, matrix, isDistance = true, initialOrder = null, previousComputeTime = null) {
   const n = Array.isArray(waypointIds) ? waypointIds.length : 0;
   if (n === 0) throw new Error("waypointIds must be a non-empty array");
   if (!Array.isArray(matrix) || matrix.length !== n || matrix.some(r => !Array.isArray(r) || r.length !== n)) {
@@ -36,12 +37,9 @@ export function twoOpt(waypointIds, matrix, isDistance = true, initialOrder = nu
   const MAX_ITERATIONS = 1000; // Safety limit
   while (improved && iterationCount < MAX_ITERATIONS) {
     improved = false;
+    iterationCount += 1;
     for (let i = 1; i < n - 1; i++) {
       for (let k = i + 1; k < n; k++) {
-        // if (i === 0 && k === n - 1) continue; // don't break the tour
-        // For TSP, we need to handle the circular nature properly
-        // Skip if this would create an invalid segment
-        // if (k - i >= n - 1) continue;
         // Don't allow swaps that would move waypoint 0 from position 0
         if (i === 1 && k === n - 1) continue;
 
@@ -89,13 +87,14 @@ export function twoOpt(waypointIds, matrix, isDistance = true, initialOrder = nu
   }
 
     const endTime = process.hrtime(startTime);
-    const ms = endTime[0] * 1000 + endTime[1] / 1000000;
+    const ms = endTime[0] * 1000 + endTime[1] / 1000000 + (previousComputeTime === null ? 0 : previousComputeTime);
 
   const payload = {
     algorithm: initialOrder === null ? "twoOpt" : "twoOptNN",
     computeTime: `${ms.toFixed(3)} ms`,
-    steps,
     stepCount: steps.length,
+    iterationCount,
+    steps,
     ...(isDistance ? { totalDistance: total } : { totalDuration: total }),
   };
 

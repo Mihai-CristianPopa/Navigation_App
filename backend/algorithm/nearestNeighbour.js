@@ -1,4 +1,5 @@
-// Your updater (unchanged, just assumes isDistance in closure)
+// Started from: https://www.w3schools.com/dsa/dsa_ref_traveling_salesman.php
+
 function makeAddStepToRoute(isDistance) {
   return function addStepToRoute(route, step) {
     if (isDistance) route.totalDistance += Number.parseFloat(step.distance);
@@ -9,10 +10,6 @@ function makeAddStepToRoute(isDistance) {
   };
 }
 
-// —— core algorithm (nearest neighbor) ——
-// waypointIdArray: string[] (ids/names for each index)
-// matrix: number[][]
-// isDistance: boolean (about the contents of the matrix distance or duration)
 export function buildNearestNeighborResponse(waypointIdArray, matrix, isDistance) {
   
   // We always start and finish with the first waypoint
