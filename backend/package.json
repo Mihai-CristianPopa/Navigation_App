@@ -12,21 +12,21 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "axios": "^1.10.0",
-    "bcrypt": "^6.0.0",
-    "bson": "^6.10.4",
-    "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
-    "country-state-city": "^3.2.1",
-    "dotenv": "^17.0.1",
-    "express": "^5.1.0",
-    "mongodb": "^6.17.0",
-    "simplify-geojson": "^1.0.5",
-    "winston": "^3.17.0",
-    "winston-daily-rotate-file": "^5.0.0"
+    "axios": "1.10.0",
+    "bcrypt": "6.0.0",
+    "bson": "6.10.4",
+    "cookie-parser": "1.4.7",
+    "cors": "2.8.5",
+    "country-state-city": "3.2.1",
+    "dotenv": "17.0.1",
+    "express": "5.1.0",
+    "mongodb": "6.17.0",
+    "simplify-geojson": "1.0.5",
+    "winston": "3.17.0",
+    "winston-daily-rotate-file": "5.0.0"
   },
   "devDependencies": {
-    "@types/node": "^24.0.12",
-    "nodemon": "^3.1.10"
+    "@types/node": "24.0.12",
+    "nodemon": "3.1.10"
   }
 }
