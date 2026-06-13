@@ -61,7 +61,7 @@ export function clearUserState() {
   hasSuggestions = false;
 }
 
-initializeApp();
+initializeApp(); 
 
 function clearSearchQuery() {
   searchInput.value = "";

@@ -8,11 +8,15 @@ import { osmRequestController } from "../controllers/osmRequestController.js";
 import { geocodeFallbackController } from "../controllers/geocodingFallbackController.js";
 import { requireAuthentication } from "../middleware/authMiddleware.js";
 import { checkDatabaseForAuth } from "../middleware/dbIsUpMiddleware.js";
+import { config } from "../configs/config.js";
 
 const router = express.Router();
 
 router.use(checkDatabaseForAuth);
-router.use(requireAuthentication);
+
+if (config.is_prod) {
+    router.use(requireAuthentication);
+}
 
 // Define the geocode route
 router.get("/geocode", geocodeController); 
