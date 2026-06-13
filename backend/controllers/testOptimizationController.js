@@ -11,6 +11,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import simplifyGeojson from "simplify-geojson";
+import { bestSimplifiedGeoJson } from "best-simplified-geojson";
 import { twoOpt } from "../algorithm/twoOpt.js";
 import { computeStrTimeFromSeconds, computeKilometersFromMeters  } from "../utils/computations.js";
 
@@ -62,9 +63,10 @@ export const testOptimizationController = async (req, res) => {
       }
 
       async function getMapboxStaticImage() {
-        let overlay;
+        const {overlay} = bestSimplifiedGeoJson(geojson);
+        // let overlay;
         try {
-          overlay = `geojson(${encodeURIComponent(JSON.stringify(geojson))})`;
+          // overlay = `geojson(${encodeURIComponent(JSON.stringify(geojson))})`;
 
           const url = `https://api.mapbox.com/styles/v1/${styleId}/static/${overlay}/auto/${width}x${height}?padding=40&access_token=${config.mapboxApiKey}`;
 
@@ -74,20 +76,20 @@ export const testOptimizationController = async (req, res) => {
           return response;
         } catch (error) {
           // The case where the geoJson is too large
-          if (error.status === 413) {
-            let tolerance = 0.01;
-            while (true) {
-              overlay = `geojson(${encodeURIComponent(JSON.stringify(simplifyGeojson(geojson, tolerance)))})`;
-              if (overlay.length < 8012) break;
-              tolerance += 0.001;
-            }
-            const url = `https://api.mapbox.com/styles/v1/${styleId}/static/${overlay}/auto/${width}x${height}?padding=40&access_token=${config.mapboxApiKey}`;
+          // if (error.status === 413) {
+          //   let tolerance = 0.01;
+          //   while (true) {
+          //     overlay = `geojson(${encodeURIComponent(JSON.stringify(simplifyGeojson(geojson, tolerance)))})`;
+          //     if (overlay.length < 8012) break;
+          //     tolerance += 0.001;
+          //   }
+          //   const url = `https://api.mapbox.com/styles/v1/${styleId}/static/${overlay}/auto/${width}x${height}?padding=40&access_token=${config.mapboxApiKey}`;
 
-            const response = await axios.get(url, {
-                responseType: 'arraybuffer'
-            });
-            return response;
-          }
+          //   const response = await axios.get(url, {
+          //       responseType: 'arraybuffer'
+          //   });
+          //   return response;
+          // }
           console.error(error);
         }
         

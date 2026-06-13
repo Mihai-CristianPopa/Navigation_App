@@ -14,6 +14,7 @@
   "dependencies": {
     "axios": "1.10.0",
     "bcrypt": "6.0.0",
+    "best-simplified-geojson": "1.0.0",
     "bson": "6.10.4",
     "cookie-parser": "1.4.7",
     "cors": "2.8.5",
