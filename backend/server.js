@@ -27,7 +27,10 @@ function setupRoutes() {
   app.use("/authentication", authenticationRoutes);
 
   // Health check endpoint
-  app.get("/health", (req, res) => {
+  app.get("/health", async (req, res) => {
+    if (app.locals.dbIsDown) {
+      await connectToDatabase();
+    }
     res.status(200).json({
       status: app.locals.dbIsDown ? "DEGRADED" : "OK",
       database: app.locals.dbIsDown ? "DOWN" : "UP",
